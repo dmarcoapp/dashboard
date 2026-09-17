@@ -1,6 +1,9 @@
 // API Configuration
-// The base URL should be configured here. Update this when you have your API URL.
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+// The base URL comes from the runtime configuration, with the build-time
+// VITE_API_BASE_URL as a fallback for local development.
+import { apiBaseUrl } from './runtime-config';
+
+export const API_BASE_URL = apiBaseUrl || 'http://localhost:8000';
 
 export const API_ENDPOINTS = {
   // Auth

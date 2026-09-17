@@ -3,6 +3,8 @@ dist
 .git
 .gitignore
 *.md
-.env*.local
+.env
+.env.*
 .vscode
 .idea
+.DS_Store

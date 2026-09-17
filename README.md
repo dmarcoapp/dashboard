@@ -52,7 +52,7 @@ npm install
 npm run dev
 ```
 
-The Vite dev server prints the local URL, usually `http://localhost:5173`.
+The Vite dev server prints the local URL, usually `http://localhost:8080`.
 
 ## Docker Development
 
@@ -73,26 +73,59 @@ Use this mode when you want a containerized Vite dev server with hot reload.
 
 ## Production Hosting
 
-For a production-style self-hosted deployment, configure `.env` or `.env.local` and start the production Compose file:
+For a full DMARCo installation, including the backend and the inbound mail
+gateway, use [`dmarcoapp/dmarcoapp`](https://github.com/dmarcoapp/dmarcoapp).
+It ships a ready-made Docker Compose stack and an installer.
+
+To run only the dashboard, use the published image:
+
+```bash
+docker run -d \
+  --name dmarco-dashboard \
+  -p 8081:80 \
+  -e DMARCO_API_BASE_URL=https://api.example.com \
+  ghcr.io/dmarcoapp/dashboard:latest
+```
+
+The image serves the built single-page app with nginx on port `80`. Put a
+reverse proxy such as Caddy, nginx, Traefik, or your platform load balancer in
+front of it for public HTTPS hosting.
+
+Images are published to `ghcr.io/dmarcoapp/dashboard` on every GitHub release,
+tagged with the release version and `latest`.
+
+To build the production image locally instead, configure `.env` and use the
+production Compose file:
 
 ```bash
 cp .env.local.example .env
 nano .env
-docker compose -f compose.prod.yaml up --build -d
-docker compose -f compose.prod.yaml ps
+docker compose --env-file .env -f compose.prod.yaml up --build -d
+docker compose --env-file .env -f compose.prod.yaml ps
 ```
-
-The production image builds static assets and serves them with nginx on:
-
-```text
-http://127.0.0.1:8081
-```
-
-Put a reverse proxy such as Caddy, nginx, Traefik, or your platform load balancer in front of it for public HTTPS hosting.
 
 ## Configuration
 
-The app is configured at build/runtime through Vite environment variables:
+### Container runtime configuration
+
+The production image is generic: it reads its configuration from environment
+variables when the container starts, so the same image works for any
+deployment without a rebuild.
+
+| Variable | Purpose |
+| --- | --- |
+| `DMARCO_API_BASE_URL` | Base URL of the DMARCo-compatible backend API. Can be an absolute URL such as `https://api.example.com`, or a same-origin path such as `/api` when a reverse proxy routes the API under the dashboard domain. |
+| `DMARCO_DISABLE_REGISTRATION` | Set to `true` to hide public registration |
+| `DMARCO_MOCK_MODE` | Set to `true` to force the bundled mock data |
+
+On startup the entrypoint writes these values to `/usr/share/nginx/html/config.js`,
+which the app loads before it boots. The file is served with `Cache-Control: no-store`,
+so a restart with new values takes effect immediately.
+
+### Build-time configuration
+
+During development, and when building the image yourself, the same settings
+come from Vite environment variables:
 
 ```env
 VITE_API_BASE_URL=https://api.example.com
@@ -106,7 +139,11 @@ Common settings:
 - `VITE_DISABLE_REGISTRATION`: set to `true` to hide public registration
 - `VITE_MOCK_MODE`: set to `true` to use bundled mock data, or `false` to call the real API
 
-If `VITE_API_BASE_URL` is not set, the app falls back to mock mode. The default API URL in source is `http://localhost:8000`.
+Runtime values take precedence over build-time values.
+
+For local exploration, leave `VITE_API_BASE_URL` empty and set `VITE_MOCK_MODE=true`. For a real deployment, set `VITE_API_BASE_URL` and `VITE_MOCK_MODE=false`.
+
+If no API URL is configured, the app falls back to mock mode. The default API URL in source is `http://localhost:8000`.
 
 ## API Contract
 
@@ -141,8 +178,10 @@ npm run build
 
 ## Related Projects
 
+- [`dmarcoapp/dmarcoapp`](https://github.com/dmarcoapp/dmarcoapp): ready-made Docker Compose stack and installer for the full application
+- [`dmarcoapp/backend`](https://github.com/dmarcoapp/backend): API, workers, and report processing pipeline
 - [`dmarcoapp/mail-inbound`](https://github.com/dmarcoapp/mail-inbound): self-hostable inbound mail gateway for DMARC aggregate reports
 
 ## License
 
-This project is licensed under the MIT License. See [`LICENSE`](LICENSE).
+Licensed under the Apache License, Version 2.0. See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).

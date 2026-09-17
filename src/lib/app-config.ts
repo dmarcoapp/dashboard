@@ -1,10 +1,11 @@
-// App configuration from environment variables
+// App configuration from the runtime configuration and environment variables
+import { disableRegistration, mockMode } from './runtime-config';
 
 export const appConfig = {
   // Set to 'true' to disable registration
-  disableRegistration: import.meta.env.VITE_DISABLE_REGISTRATION === 'true',
-  // Mock mode is enabled by default, disabled only when VITE_MOCK_MODE=false AND an API URL is configured
-  mockMode: import.meta.env.VITE_MOCK_MODE !== 'false' || !import.meta.env.VITE_API_BASE_URL,
+  disableRegistration,
+  // Mock mode is enabled by default, disabled only when mock mode is turned off AND an API URL is configured
+  mockMode,
   // Simulated loading delay in mock mode (ms)
   mockDelay: 800,
 } as const;
