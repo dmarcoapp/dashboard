@@ -5,7 +5,7 @@
 <h1 align="center">DMARCo Dashboard</h1>
 
 <p align="center">
-  Open-source, self-hostable dashboard for DMARC monitoring.
+  Self-hosted DMARC monitoring: the web UI behind DMARCo.
 </p>
 
 <p align="center">
@@ -16,17 +16,17 @@
 
 > [!IMPORTANT]
 > **Start at [dmarcoapp/dmarcoapp](https://github.com/dmarcoapp/dmarcoapp).**
-> That repository installs all of DMARCo — this dashboard, the backend and the
-> mail gateway — with one command, and it is the issue tracker for the whole
-> project. Something wrong, including in this component?
-> [Open an issue there](https://github.com/dmarcoapp/dmarcoapp/issues/new/choose).
-> This repository holds one component's source; it is not where you start if you
-> just want to run DMARCo.
+> That repository installs all of DMARCo with one command: this dashboard, the
+> backend, and the mail gateway. It is also the issue tracker for the whole
+> project, so
+> [report anything that goes wrong there](https://github.com/dmarcoapp/dmarcoapp/issues/new/choose),
+> including problems in this component. What follows is one component's source,
+> for people working on it.
 
-It gives domain owners a web UI for reviewing DMARC aggregate reports, sender
-alignment, policy outcomes, suspicious traffic, and domain protection status.
-The dashboard can run with mock data for local exploration, or connect to a
-DMARCo-compatible API for real deployments.
+The dashboard is where DMARC reports become readable: volume, pass rates, and
+trends, the senders behind them, per-domain protection and alignment, and the
+account screens that go with it. It talks to a DMARCo-compatible API, and falls
+back to bundled sample data when there is no API to talk to.
 
 ## Overview
 
@@ -48,16 +48,18 @@ inbound report collection, see
 
 ## Features
 
-- DMARC dashboard with report count, message volume, pass rate, blocked threats,
-  and trend cards
-- report browsing with filtering, sorting, pagination, XML preview, record
-  details, and bulk deletion
-- domain inventory with protection level indicators
-- sender, offender, reporting organization, and country distribution views
-- user blocklist management
-- authentication screens, registration flow, email verification, password reset,
-  profile, 2FA, and notifications
-- responsive UI for desktop and mobile
+- Dashboard cards for report count, message volume, pass rate, and threats
+  blocked, each with a trend against the previous period
+- Message volume, compliance, top senders, top offenders, reporting
+  organizations, source countries, and newly seen domains
+- Report browsing with filtering, sorting, pagination, record details, XML
+  preview, and bulk deletion
+- Domain list and per-domain pages with the published DMARC record, a protection
+  level, and DKIM and SPF alignment
+- Blocklist management
+- Login, registration, email verification, password reset, two-factor
+  authentication, profile, and notification settings
+- Responsive layout for desktop and mobile
 
 ## Requirements
 
@@ -67,7 +69,7 @@ inbound report collection, see
 - A reachable DMARCo backend for real data. Without one, mock mode runs the
   whole UI on bundled sample data
 
-## Get Started
+## Get started
 
 Clone the repository and create local configuration:
 
@@ -90,7 +92,9 @@ npm install
 npm run dev
 ```
 
-The Vite dev server prints the local URL, usually `http://localhost:8080`.
+The Vite dev server prints the local URL, usually `http://localhost:8080`. The
+backend's development stack publishes its API on that same port, so move one of
+them if you run both.
 
 ## Configuration
 
@@ -129,11 +133,11 @@ VITE_MOCK_MODE=false
 
 Runtime values take precedence over build-time values. For local exploration,
 leave `VITE_API_BASE_URL` empty and set `VITE_MOCK_MODE=true`. For a real
-deployment, set `VITE_API_BASE_URL` and `VITE_MOCK_MODE=false`. If no API URL is
-configured, the app falls back to mock mode. The default API URL in source is
-`http://localhost:8000`.
+deployment, set `VITE_API_BASE_URL` and `VITE_MOCK_MODE=false`. With no API URL
+configured, the app falls back to mock mode, and the default baked into the
+source is `http://localhost:8000`.
 
-## API Contract
+## API contract
 
 The dashboard calls these endpoint groups:
 
@@ -216,7 +220,7 @@ containerized Vite dev server with hot reload.
 Coding standards and UI conventions are in [`AGENTS.md`](AGENTS.md), and the
 contribution guide is in [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
-## Related Projects
+## Related projects
 
 - [`dmarcoapp/dmarcoapp`](https://github.com/dmarcoapp/dmarcoapp): ready-made
   Docker Compose stack and installer for the full application

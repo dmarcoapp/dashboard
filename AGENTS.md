@@ -12,7 +12,7 @@ Guidelines for AI assistants contributing to the DMARCo dashboard.
   `fetch` directly.
 - `src/lib`: API client, runtime configuration, parsing and formatting helpers.
 - `src/contexts` and `src/hooks`: cross-screen state such as authentication.
-- Do not edit files in `src/components/ui` to add product behaviour; wrap them.
+- Do not edit files in `src/components/ui` to add product behavior; wrap them.
 
 ## Configuration
 - The production image is generic and reads its settings at runtime from
@@ -25,7 +25,7 @@ Guidelines for AI assistants contributing to the DMARCo dashboard.
 - Use the `drawer` component instead of `modal` on mobile viewports.
 - Keep screens usable at phone width; the app is used on both desktop and mobile.
 - Use the design tokens from `src/index.css` and Tailwind classes; no hard-coded
-  colours, and the UI must work in both light and dark themes.
+  colors, and the UI must work in both light and dark themes.
 - Use `lucide-react` for icons, and the existing toast and form patterns rather
   than new ones.
 

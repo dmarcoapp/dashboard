@@ -1,14 +1,6 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
+# The dashboard is a private, self-hosted application, so keep it out of search
+# indexes. Authentication is what protects the data; this only stops crawlers
+# from listing the instance.
 
 User-agent: *
-Allow: /
+Disallow: /
