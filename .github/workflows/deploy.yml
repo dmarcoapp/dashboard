@@ -1,3 +1,12 @@
+# Deployment workflow for the DMARCo project's own server.
+#
+# This is not part of installing DMARCo, and it is not something you need to
+# fork or copy. To run DMARCo yourself, use the ready-made stack and installer
+# in https://github.com/dmarcoapp/dmarcoapp instead.
+#
+# The workflow only runs on demand (workflow_dispatch) and expects DEPLOY_HOST,
+# DEPLOY_USER, DEPLOY_PATH and SSH_PRIVATE_KEY to be set as repository secrets.
+
 name: Deploy to Production
 
 on:
