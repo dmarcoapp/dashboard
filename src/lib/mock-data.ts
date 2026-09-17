@@ -13,7 +13,7 @@ export const mockUser: User = {
   id: 'mock-user-1',
   name: 'John Doe',
   email: 'john.doe@example.com',
-  sharedAggregatePostboxAddress: 'xxxxxxxxxxxxxx@reports.dmarco.app',
+  sharedAggregatePostboxAddress: 'xxxxxxxxxxxxxx@reports.example.com',
 };
 
 export const mockTwoFactorProfile: TwoFactorProfile = {
@@ -70,28 +70,28 @@ export const mockDashboard: DashboardApi = {
   newDomainTrend: 75,
   newDomains: [
     'example.com',
-    'yourdomain.com',
-    'testdomain.org',
+    'example.net',
+    'mail.example',
   ],
   topOffenders: [
     {
-      sourceIp: '185.70.42.15',
+      sourceIp: '192.0.2.10',
       count: 2810,
       sourceIpInfo: {
         orgName: 'Example Hosting GmbH',
         orgCountry: 'DE',
-        orgAbuseEmail: 'abuse@example-hosting.de',
-        orgTechEmail: 'noc@example-hosting.de',
+        orgAbuseEmail: 'abuse@hosting.example',
+        orgTechEmail: 'noc@hosting.example',
       },
     },
     {
-      sourceIp: '91.234.56.78',
+      sourceIp: '192.0.2.44',
       count: 1245,
       sourceIpInfo: {
         orgName: 'Northern Transit Networks',
         orgCountry: 'SE',
         orgAbuseEmail: null,
-        orgTechEmail: 'tech@northern-transit.net',
+        orgTechEmail: 'tech@transit.example',
       },
     },
     {
@@ -115,7 +115,7 @@ export const mockDashboard: DashboardApi = {
       },
     },
     {
-      sourceIp: '81.0.107.82',
+      sourceIp: '192.0.2.91',
       count: 123,
       sourceIpInfo: {
         orgName: null,
@@ -127,32 +127,32 @@ export const mockDashboard: DashboardApi = {
   ],
   topSenders: [
     {
-      sourceIp: '209.85.220.41',
+      sourceIp: '198.51.100.41',
       count: 9450,
       sourceIpInfo: {
-        orgName: 'Google LLC',
+        orgName: 'Example Mail Provider',
         orgCountry: 'US',
-        orgAbuseEmail: 'network-abuse@google.com',
-        orgTechEmail: 'arin-contact@google.com',
+        orgAbuseEmail: 'network-abuse@provider.example',
+        orgTechEmail: 'noc@provider.example',
       },
     },
     {
-      sourceIp: '40.107.220.12',
+      sourceIp: '198.51.100.12',
       count: 6120,
       sourceIpInfo: {
-        orgName: 'Microsoft Corporation',
+        orgName: 'Example Cloud Services',
         orgCountry: 'US',
         orgAbuseEmail: null,
-        orgTechEmail: 'hostmaster@microsoft.com',
+        orgTechEmail: 'hostmaster@cloud.example',
       },
     },
     {
-      sourceIp: '185.70.40.120',
+      sourceIp: '198.51.100.120',
       count: 3275,
       sourceIpInfo: {
-        orgName: 'Proton AG',
+        orgName: 'Example Secure Mail AG',
         orgCountry: 'CH',
-        orgAbuseEmail: 'abuse@proton.me',
+        orgAbuseEmail: 'abuse@securemail.example',
         orgTechEmail: null,
       },
     },
@@ -262,12 +262,12 @@ export const mockReportsList: ReportApi[] = [
   {
     id: 'report-4',
     domainId: '2',
-    reportId: 'google.com!mydomain.org!1718409600!1718496000',
+    reportId: 'google.com!example.net!1718409600!1718496000',
     fromAddress: 'noreply-dmarc-support@google.com',
     reportingOrganization: 'Google Inc.',
     reportingOrganizationEmail: 'noreply-dmarc-support@google.com',
     reportingOrganizationExtraContact: 'https://support.google.com/a/answer/2466580',
-    domain: 'mydomain.org',
+    domain: 'example.net',
     beginDate: { date: '2024-06-15 00:00:00.000000', timezone_type: 3, timezone: 'UTC' },
     endDate: { date: '2024-06-16 00:00:00.000000', timezone_type: 3, timezone: 'UTC' },
     sumCount: 6230,
@@ -315,12 +315,12 @@ export const mockRecords: ReportRecordApi[] = [
   {
     id: 'record-1',
     reportId: 'report-1',
-    sourceIp: '209.85.220.41',
+    sourceIp: '198.51.100.41',
     sourceIpInfo: {
-      orgName: 'Google LLC',
+      orgName: 'Example Mail Provider',
       orgCountry: 'US',
-      orgAbuseEmail: 'network-abuse@google.com',
-      orgTechEmail: 'arin-contact@google.com',
+      orgAbuseEmail: 'network-abuse@provider.example',
+      orgTechEmail: 'noc@provider.example',
     },
     count: 3250,
     disposition: 'none',
@@ -335,12 +335,12 @@ export const mockRecords: ReportRecordApi[] = [
   {
     id: 'record-2',
     reportId: 'report-1',
-    sourceIp: '209.85.220.42',
+    sourceIp: '198.51.100.42',
     sourceIpInfo: {
-      orgName: 'Google LLC',
+      orgName: 'Example Mail Provider',
       orgCountry: 'US',
-      orgAbuseEmail: 'network-abuse@google.com',
-      orgTechEmail: 'arin-contact@google.com',
+      orgAbuseEmail: 'network-abuse@provider.example',
+      orgTechEmail: 'noc@provider.example',
     },
     count: 890,
     disposition: 'none',
@@ -355,32 +355,32 @@ export const mockRecords: ReportRecordApi[] = [
   {
     id: 'record-3',
     reportId: 'report-1',
-    sourceIp: '185.70.42.15',
+    sourceIp: '192.0.2.10',
     sourceIpInfo: {
-      orgName: 'Malicious Network Inc',
-      orgCountry: 'RU',
-      orgAbuseEmail: 'abuse@malicious.com',
-      orgTechEmail: 'tech@malicious.com',
+      orgName: 'Unidentified Network',
+      orgCountry: null,
+      orgAbuseEmail: null,
+      orgTechEmail: null,
     },
     count: 180,
     disposition: 'reject',
     dkimAlign: 'fail',
     spfAlign: 'fail',
     dkimAuth: 'fail',
-    dkimDomain: 'malicious.com',
+    dkimDomain: 'spoofed-sender.example',
     dkimSelector: null,
     spfAuth: 'fail',
-    spfDomain: 'malicious.com',
+    spfDomain: 'spoofed-sender.example',
   },
   {
     id: 'record-4',
     reportId: 'report-1',
-    sourceIp: '74.125.82.50',
+    sourceIp: '198.51.100.50',
     sourceIpInfo: {
-      orgName: 'Google LLC',
+      orgName: 'Example Mail Provider',
       orgCountry: 'US',
-      orgAbuseEmail: 'network-abuse@google.com',
-      orgTechEmail: 'arin-contact@google.com',
+      orgAbuseEmail: 'network-abuse@provider.example',
+      orgTechEmail: 'noc@provider.example',
     },
     count: 200,
     disposition: 'none',
@@ -390,7 +390,7 @@ export const mockRecords: ReportRecordApi[] = [
     dkimDomain: 'example.com',
     dkimSelector: 'selector1',
     spfAuth: 'fail',
-    spfDomain: 'otherdomain.com',
+    spfDomain: 'other.example',
   },
 ];
 

@@ -27,7 +27,7 @@ export function AddDomainDialog() {
   const [spfAlignment, setSpfAlignment] = useState<Alignment>('r');
   const [pct, setPct] = useState<Pct>('100');
   
-  const reportingUri = user?.sharedAggregatePostboxAddress ?? 'your-address@reports.dmarco.app';
+  const reportingUri = user?.sharedAggregatePostboxAddress ?? 'your-address@reports.example.com';
   
   const generatedRecord = `v=DMARC1; p=${policy}; sp=${subdomainPolicy}; rua=mailto:${reportingUri}; adkim=${dkimAlignment}; aspf=${spfAlignment}; pct=${pct}`;
 
@@ -147,7 +147,7 @@ export function AddDomainDialog() {
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
-                  Applies to all subdomains (e.g., mail.yourdomain.com).
+                  Applies to all subdomains (e.g., mail.example.com).
                 </p>
               </div>
 
