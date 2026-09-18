@@ -1,9 +1,11 @@
 // API Configuration
 // The base URL comes from the runtime configuration, with the build-time
-// VITE_API_BASE_URL as a fallback for local development.
+// VITE_API_BASE_URL as a fallback for local development. Without either, /api
+// on this origin is the right guess, because that is where the Compose stack
+// serves the API, behind the same web server as the dashboard.
 import { apiBaseUrl } from './runtime-config';
 
-export const API_BASE_URL = apiBaseUrl || 'http://localhost:8000';
+export const API_BASE_URL = apiBaseUrl || '/api';
 
 export const API_ENDPOINTS = {
   // Auth
