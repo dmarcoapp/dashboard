@@ -41,6 +41,7 @@ export default function ProfilePage() {
   const [name, setName] = useState(user?.name ?? '');
   const [isUpdatingName, setIsUpdatingName] = useState(false);
   
+  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isChangingPassword, setIsChangingPassword] = useState(false);
@@ -117,6 +118,10 @@ export default function ProfilePage() {
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!currentPassword) {
+      toast({ variant: 'destructive', title: 'Enter your current password' });
+      return;
+    }
     if (newPassword !== confirmPassword) {
       toast({ variant: 'destructive', title: "Passwords don't match" });
       return;
@@ -127,12 +132,19 @@ export default function ProfilePage() {
     }
     setIsChangingPassword(true);
     try {
-      await userService.changePassword(newPassword);
-      setNewPassword(''); 
+      await userService.changePassword(currentPassword, newPassword);
+      setCurrentPassword('');
+      setNewPassword('');
       setConfirmPassword('');
       toast({ title: 'Password changed successfully' });
     } catch (error) {
-      toast({ variant: 'destructive', title: 'Failed to change password', description: error instanceof ApiError ? error.message : 'An error occurred' });
+      // The only 400 this endpoint returns for a password change is a current
+      // password that does not match, and the generic error envelope hides the
+      // reason, so name it here rather than showing "Request failed".
+      const description = error instanceof ApiError && error.status === 400
+        ? 'Your current password is incorrect'
+        : error instanceof ApiError ? error.message : 'An error occurred';
+      toast({ variant: 'destructive', title: 'Failed to change password', description });
     } finally {
       setIsChangingPassword(false);
     }
@@ -249,12 +261,16 @@ export default function ProfilePage() {
         <CardContent>
           <form onSubmit={handleChangePassword} className="space-y-4">
             <div className="space-y-2">
+              <Label htmlFor="currentPassword">Current Password</Label>
+              <Input id="currentPassword" type="password" autoComplete="current-password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="newPassword">New Password</Label>
-              <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+              <Input id="newPassword" type="password" autoComplete="new-password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm New Password</Label>
-              <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+              <Input id="confirmPassword" type="password" autoComplete="new-password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
             </div>
             <Button type="submit" disabled={isChangingPassword}>
               {isChangingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Change Password

@@ -55,6 +55,7 @@ export interface TwoFactorProfile {
 export interface UpdateProfileRequest {
   name?: string | null;
   password?: string | null;
+  currentPassword?: string | null;
 }
 
 export interface Notifications {

@@ -78,6 +78,11 @@ export default function TwoFactorPage() {
         return;
       }
 
+      if (error instanceof ApiError && error.error === 'two_factor_throttled') {
+        setCodeError('Too many attempts. Wait a few minutes and sign in again.');
+        return;
+      }
+
       const message = error instanceof ApiError ? error.message : 'An error occurred during login';
       toast({
         variant: 'destructive',

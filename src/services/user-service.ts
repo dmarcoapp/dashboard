@@ -25,11 +25,11 @@ export const userService = {
     return apiClient.patch<User>(API_ENDPOINTS.profile, data);
   },
 
-  async changePassword(newPassword: string): Promise<User> {
+  async changePassword(currentPassword: string, newPassword: string): Promise<User> {
     if (appConfig.mockMode) {
       return currentMockUser;
     }
-    return apiClient.patch<User>(API_ENDPOINTS.profile, { password: newPassword });
+    return apiClient.patch<User>(API_ENDPOINTS.profile, { password: newPassword, currentPassword });
   },
 
   async deleteAccount(email: string): Promise<void> {
