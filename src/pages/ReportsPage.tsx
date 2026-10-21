@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { useUrlFilters } from '@/hooks/use-url-filters';
 import { ReportsFilterPanel } from '@/components/reports/ReportsFilterPanel';
 import { ReportsPageSkeleton } from '@/components/skeletons';
+import { LoadError } from '@/components/LoadError';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from '@/hooks/use-toast';
 import { ApiError } from '@/lib/api-client';
@@ -105,6 +106,7 @@ export default function ReportsPage() {
   const navigate = useNavigate();
   const [data, setData] = useState<ReportsResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedReportIds, setSelectedReportIds] = useState<string[]>([]);
@@ -147,6 +149,7 @@ export default function ReportsPage() {
 
   const fetchReports = useCallback(async () => {
     setIsLoading(true);
+    setLoadFailed(false);
     try {
       const queryParams: ReportsQueryParams = {
         page: pagination.page,
@@ -172,6 +175,7 @@ export default function ReportsPage() {
       setSelectedReportIds((prev) => prev.filter((id) => response.items.some((report) => report.id === id)));
     } catch (error) {
       console.error('Failed to fetch reports:', error);
+      setLoadFailed(true);
     } finally {
       setIsLoading(false);
     }
@@ -328,6 +332,8 @@ export default function ReportsPage() {
         <CardContent className="p-4 md:p-6 pt-0 md:pt-0">
           {isLoading ? (
             <ReportsPageSkeleton />
+          ) : loadFailed ? (
+            <LoadError message="The reports could not be loaded." onRetry={fetchReports} />
           ) : (
             <div className="animate-fade-in">
               {/* Mobile card view */}

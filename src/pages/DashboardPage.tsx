@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TouchTooltip } from '@/components/ui/touch-tooltip';
 import { Button } from '@/components/ui/button';
 import { DashboardSkeleton } from '@/components/skeletons';
+import { LoadError } from '@/components/LoadError';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { FileText, Mail, CheckCircle, ShieldAlert, Info } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine, Legend } from 'recharts';
@@ -55,6 +56,8 @@ export default function DashboardPage() {
   const isMobile = useIsMobile();
   const [stats, setStats] = useState<DashboardApi | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   const [periodDays, setPeriodDays] = useState<number>(getStoredPeriod);
 
   const handlePeriodChange = (days: number) => {
@@ -65,17 +68,21 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchStats = async () => {
       setIsLoading(true);
+      setLoadFailed(false);
       try {
         const data = await statsService.getStats(periodDays);
         setStats(data);
       } catch (error) {
         console.error('Failed to fetch stats:', error);
+        // Numbers from another period, or zeros, would read as real results.
+        setStats(null);
+        setLoadFailed(true);
       } finally {
         setIsLoading(false);
       }
     };
     fetchStats();
-  }, [periodDays]);
+  }, [periodDays, reloadKey]);
 
   // Transform messageCountByDate/threatCountByDate objects to array for the chart
   const chartData = (() => {
@@ -143,6 +150,15 @@ export default function DashboardPage() {
 
       {isLoading ? (
         <DashboardSkeleton />
+      ) : loadFailed ? (
+        <Card>
+          <CardContent>
+            <LoadError
+              message="The dashboard could not be loaded."
+              onRetry={() => setReloadKey((key) => key + 1)}
+            />
+          </CardContent>
+        </Card>
       ) : (
         <div className="animate-fade-in space-y-4 min-w-0">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 [&>*]:min-w-0">
