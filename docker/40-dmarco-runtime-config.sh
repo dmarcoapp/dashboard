@@ -29,10 +29,6 @@ if [ -n "${DMARCO_API_BASE_URL:-}" ]; then
     append "\"apiBaseUrl\":\"$(json_escape "$DMARCO_API_BASE_URL")\""
 fi
 
-if [ -n "${DMARCO_DISABLE_REGISTRATION:-}" ]; then
-    append "\"disableRegistration\":$(json_bool "$DMARCO_DISABLE_REGISTRATION")"
-fi
-
 if [ -n "${DMARCO_MOCK_MODE:-}" ]; then
     append "\"mockMode\":$(json_bool "$DMARCO_MOCK_MODE")"
 fi

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -27,14 +27,6 @@ export default function TwoFactorPage() {
   const [code, setCode] = useState('');
   const [codeError, setCodeError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-
-  const maskedEmail = useMemo(() => {
-    if (!state?.email) return '';
-    const [name, domain] = state.email.split('@');
-    if (!domain) return state.email;
-    const safeName = name.length > 2 ? `${name.slice(0, 2)}***` : `${name}***`;
-    return `${safeName}@${domain}`;
-  }, [state?.email]);
 
   useEffect(() => {
     if (!hasCredentials) {
@@ -112,7 +104,7 @@ export default function TwoFactorPage() {
           <div>
             <CardTitle className="text-2xl font-bold">Two-factor verification</CardTitle>
             <CardDescription className="mt-2">
-              Enter the 6-digit code for {maskedEmail || 'your account'}
+              Enter the 6-digit code from your authenticator app
             </CardDescription>
           </div>
         </CardHeader>
@@ -147,6 +139,10 @@ export default function TwoFactorPage() {
                 'Verify'
               )}
             </Button>
+            <p className="text-sm text-muted-foreground text-center">
+              Lost the app? Turn two-factor authentication off on the server with{' '}
+              <code className="text-xs font-mono whitespace-nowrap">bin/console app:user:disable-two-factor</code>
+            </p>
             <p className="text-sm text-muted-foreground text-center">
               Wrong account?{' '}
               <Link to="/auth/login" className="text-primary hover:underline">

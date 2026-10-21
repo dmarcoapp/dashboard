@@ -11,25 +11,8 @@ export interface LoginResponse {
   refresh_token_expiration: string;
 }
 
-export interface RegisterRequest {
-  name: string;
-  email: string;
-  password: string;
-}
-
-export interface EmailVerifyRequest {
-  email: string;
-  token: string;
-}
-
-export interface PasswordResetRequestPayload {
-  email: string;
-}
-
-export interface PasswordResetPayload {
-  email: string;
-  token: string;
-  password: string;
+export interface AuthStatus {
+  accountExists: boolean;
 }
 
 export interface RefreshTokenRequest {

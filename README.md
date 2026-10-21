@@ -57,8 +57,8 @@ inbound report collection, see
 - Domain list and per-domain pages with the published DMARC record, a protection
   level, and DKIM and SPF alignment
 - Blocklist management
-- Login, registration, email verification, password reset, two-factor
-  authentication, profile, and notification settings
+- Login with optional two-factor authentication by authenticator app, profile,
+  and notification settings
 - Responsive layout for desktop and mobile
 
 ## Requirements
@@ -107,7 +107,6 @@ without a rebuild.
 | Variable | Purpose |
 | --- | --- |
 | `DMARCO_API_BASE_URL` | Base URL of the DMARCo-compatible backend API. Can be an absolute URL such as `https://api.example.com`, or a same-origin path such as `/api` when a reverse proxy routes the API under the dashboard domain. |
-| `DMARCO_DISABLE_REGISTRATION` | Set to `true` to hide public registration |
 | `DMARCO_MOCK_MODE` | Set to `true` to force the bundled mock data |
 
 On startup the entrypoint writes these values to
@@ -122,12 +121,10 @@ from Vite environment variables:
 
 ```env
 VITE_API_BASE_URL=https://api.example.com
-VITE_DISABLE_REGISTRATION=false
 VITE_MOCK_MODE=false
 ```
 
 - `VITE_API_BASE_URL`: base URL of the DMARCo-compatible backend API
-- `VITE_DISABLE_REGISTRATION`: set to `true` to hide public registration
 - `VITE_MOCK_MODE`: set to `true` to use bundled mock data, or `false` to call
   the real API
 
@@ -141,8 +138,7 @@ source is `http://localhost:8000`.
 
 The dashboard calls these endpoint groups:
 
-- `/v1/auth/*` for login, token refresh, registration, verification, and
-  password reset
+- `/v1/auth/*` for login, token refresh, and whether an account exists yet
 - `/v1/user/*` for profile, logout, 2FA, notifications, and blocklist
 - `/v1/dmarc/reports` for report lists, report detail, records, XML, and
   deletion

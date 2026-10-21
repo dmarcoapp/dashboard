@@ -7,7 +7,6 @@
 
 export type RuntimeConfig = {
   apiBaseUrl?: string;
-  disableRegistration?: boolean;
   mockMode?: boolean;
 };
 
@@ -37,9 +36,6 @@ if (
 
 export const apiBaseUrl: string =
   runtimeConfig.apiBaseUrl?.trim() || import.meta.env.VITE_API_BASE_URL || '';
-
-export const disableRegistration: boolean =
-  runtimeConfig.disableRegistration ?? import.meta.env.VITE_DISABLE_REGISTRATION === 'true';
 
 // Mock mode is whatever the runtime configuration says. Without an answer it
 // follows the build, and only a build that said nothing at all falls back to the

@@ -32,16 +32,6 @@ export const userService = {
     return apiClient.patch<User>(API_ENDPOINTS.profile, { password: newPassword, currentPassword });
   },
 
-  async deleteAccount(email: string): Promise<void> {
-    if (appConfig.mockMode) {
-      return; // Simulate successful deletion
-    }
-    await apiClient.delete(API_ENDPOINTS.deleteProfile, {
-      body: JSON.stringify({ email }),
-      headers: { 'Content-Type': 'application/json' },
-    });
-  },
-
   async getTwoFactorProfile(): Promise<TwoFactorProfile> {
     if (appConfig.mockMode) {
       return currentMockTwoFactorProfile;

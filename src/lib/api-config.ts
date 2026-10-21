@@ -10,18 +10,13 @@ export const API_BASE_URL = apiBaseUrl || '/api';
 export const API_ENDPOINTS = {
   // Auth
   login: '/v1/auth/login_check',
-  register: '/v1/auth/register',
+  authStatus: '/v1/auth/status',
   logout: '/v1/user/logout',
   refreshToken: '/v1/auth/token_refresh',
-  emailVerify: '/v1/auth/verify',
-  resendVerification: '/v1/auth/request_verification_resend',
-  passwordResetRequest: '/v1/auth/request_password_reset',
-  passwordReset: '/v1/auth/reset_password',
   
   // User/Profile
   profile: '/v1/user/profile',
   profileTwoFactor: '/v1/user/profile/2fa',
-  deleteProfile: '/v1/user/profile',
   enableTwoFactorApp: '/v1/user/profile/2fa/app/enable',
   disableTwoFactorApp: '/v1/user/profile/2fa/app/disable',
   notifications: '/v1/user/notifications',

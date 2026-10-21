@@ -118,7 +118,11 @@ export default function NotificationsPage() {
               <Bell className="h-5 w-5 shrink-0" />
               Notification Preferences
             </CardTitle>
-            <CardDescription>Enable or disable specific account notifications</CardDescription>
+            <CardDescription>
+              Notifications arrive by email, so they need outgoing mail set up on the server, with{' '}
+              <code className="text-xs font-mono">MAILER_DSN</code> in its <code className="text-xs font-mono">.env</code>.
+              Without it, nothing is sent.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {!settings ? (

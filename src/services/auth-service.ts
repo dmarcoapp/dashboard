@@ -3,12 +3,9 @@ import { API_ENDPOINTS } from '@/lib/api-config';
 import { appConfig } from '@/lib/app-config';
 import { mockUser } from '@/lib/mock-data';
 import type {
+  AuthStatus,
   LoginRequest,
   LoginResponse,
-  RegisterRequest,
-  EmailVerifyRequest,
-  PasswordResetRequestPayload,
-  PasswordResetPayload,
   User,
 } from '@/types/api';
 
@@ -49,11 +46,11 @@ export const authService = {
     return response;
   },
 
-  async register(data: RegisterRequest): Promise<void> {
+  async getStatus(): Promise<AuthStatus> {
     if (appConfig.mockMode) {
-      return; // Simulate successful registration
+      return { accountExists: true };
     }
-    await apiClient.post(API_ENDPOINTS.register, data, { skipAuth: true });
+    return apiClient.get<AuthStatus>(API_ENDPOINTS.authStatus, { skipAuth: true });
   },
 
   async logout(): Promise<void> {
@@ -69,34 +66,6 @@ export const authService = {
     } finally {
       tokenStorage.clear();
     }
-  },
-
-  async verifyEmail(data: EmailVerifyRequest): Promise<void> {
-    if (appConfig.mockMode) {
-      return; // Simulate successful verification
-    }
-    await apiClient.post(API_ENDPOINTS.emailVerify, data, { skipAuth: true });
-  },
-
-  async resendVerification(email: string): Promise<void> {
-    if (appConfig.mockMode) {
-      return; // Simulate successful resend
-    }
-    await apiClient.post(API_ENDPOINTS.resendVerification, { email }, { skipAuth: true });
-  },
-
-  async requestPasswordReset(data: PasswordResetRequestPayload): Promise<void> {
-    if (appConfig.mockMode) {
-      return; // Simulate successful request
-    }
-    await apiClient.post(API_ENDPOINTS.passwordResetRequest, data, { skipAuth: true });
-  },
-
-  async resetPassword(data: PasswordResetPayload): Promise<void> {
-    if (appConfig.mockMode) {
-      return; // Simulate successful reset
-    }
-    await apiClient.post(API_ENDPOINTS.passwordReset, data, { skipAuth: true });
   },
 
   async getCurrentUser(): Promise<User> {

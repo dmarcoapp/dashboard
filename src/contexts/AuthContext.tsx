@@ -1,14 +1,13 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { authService } from '@/services/auth-service';
 import { tokenStorage } from '@/lib/api-client';
-import type { User, RegisterRequest } from '@/types/api';
+import type { User } from '@/types/api';
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string, twoFactorCode?: string) => Promise<void>;
-  register: (data: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -45,10 +44,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await refreshUser();
   };
 
-  const register = async (data: RegisterRequest) => {
-    await authService.register(data);
-  };
-
   const logout = async () => {
     await authService.logout();
     setUser(null);
@@ -61,7 +56,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         isAuthenticated: !!user,
         login,
-        register,
         logout,
         refreshUser,
       }}

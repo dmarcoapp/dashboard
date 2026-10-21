@@ -12,10 +12,6 @@ import { MockModeIndicator } from "@/components/MockModeIndicator";
 // Auth pages
 import LoginPage from "@/pages/auth/LoginPage";
 import TwoFactorPage from "@/pages/auth/TwoFactorPage";
-import RegisterPage from "@/pages/auth/RegisterPage";
-import EmailVerifyPage from "@/pages/auth/EmailVerifyPage";
-import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage";
-import PasswordResetPage from "@/pages/auth/PasswordResetPage";
 
 // Dashboard pages
 import DashboardPage from "@/pages/DashboardPage";
@@ -46,10 +42,6 @@ const App = () => (
             {/* Auth routes - redirect to dashboard if logged in */}
             <Route path="/auth/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
             <Route path="/auth/two-factor" element={<PublicRoute><TwoFactorPage /></PublicRoute>} />
-            <Route path="/auth/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
-            <Route path="/auth/email-verify" element={<PublicRoute><EmailVerifyPage /></PublicRoute>} />
-            <Route path="/auth/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
-            <Route path="/auth/password-reset" element={<PublicRoute><PasswordResetPage /></PublicRoute>} />
             
             {/* Protected dashboard routes */}
             <Route path="/" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>

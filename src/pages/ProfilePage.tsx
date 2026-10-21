@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { userService } from '@/services/user-service';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,12 +28,11 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ApiError } from '@/lib/api-client';
-import { Loader2, User, Lock, Copy, Check, Trash2 } from 'lucide-react';
+import { Loader2, User, Lock, Copy, Check } from 'lucide-react';
 import type { TwoFactorProfile } from '@/types/api';
 
 export default function ProfilePage() {
-  const navigate = useNavigate();
-  const { user, refreshUser, logout } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { toast } = useToast();
   const isMobile = useIsMobile();
   
@@ -47,9 +45,6 @@ export default function ProfilePage() {
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [copied, setCopied] = useState(false);
   
-  const [deleteConfirmEmail, setDeleteConfirmEmail] = useState('');
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [disableTwoFactorDialogOpen, setDisableTwoFactorDialogOpen] = useState(false);
   const [twoFactorCode, setTwoFactorCode] = useState('');
   const [isEnablingTwoFactor, setIsEnablingTwoFactor] = useState(false);
@@ -147,29 +142,6 @@ export default function ProfilePage() {
       toast({ variant: 'destructive', title: 'Failed to change password', description });
     } finally {
       setIsChangingPassword(false);
-    }
-  };
-
-  const handleDeleteAccount = async () => {
-    if (deleteConfirmEmail !== user?.email) {
-      toast({ variant: 'destructive', title: 'Email does not match your account email' });
-      return;
-    }
-    
-    setIsDeleting(true);
-    try {
-      await userService.deleteAccount(deleteConfirmEmail);
-      await logout();
-      navigate('/auth/login', { replace: true });
-      toast({ title: 'Account deleted successfully' });
-    } catch (error) {
-      toast({ 
-        variant: 'destructive', 
-        title: 'Failed to delete account', 
-        description: error instanceof ApiError ? error.message : 'An error occurred' 
-      });
-    } finally {
-      setIsDeleting(false);
     }
   };
 
@@ -282,7 +254,7 @@ export default function ProfilePage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><Lock className="h-5 w-5" /> Two-Factor Authentication</CardTitle>
-          <CardDescription>Secure your account</CardDescription>
+          <CardDescription>A code from an authenticator app at every sign-in</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {isTwoFactorLoading ? (
@@ -293,9 +265,9 @@ export default function ProfilePage() {
           ) : (
             <>
           <div className="text-sm text-muted-foreground">
-            Current method:{' '}
+            Status:{' '}
             <span className="font-medium text-foreground">
-              {twoFactor?.twoFactorMethod === 'app' ? 'App' : 'Email'}
+              {twoFactor?.twoFactorAppEnabled ? 'On' : 'Off'}
             </span>
           </div>
           {twoFactor?.twoFactorAppEnabled ? (
@@ -303,7 +275,7 @@ export default function ProfilePage() {
               {(() => {
                 const disableTrigger = (
                   <Button type="button" variant="destructive">
-                    Switch back to email
+                    Turn off
                   </Button>
                 );
 
@@ -314,7 +286,7 @@ export default function ProfilePage() {
                     disabled={isDisablingTwoFactor}
                   >
                     {isDisablingTwoFactor && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Switch back
+                    Turn off
                   </Button>
                 );
 
@@ -326,9 +298,9 @@ export default function ProfilePage() {
                       </DrawerTrigger>
                       <DrawerContent>
                         <DrawerHeader className="text-left">
-                          <DrawerTitle>Disable app method?</DrawerTitle>
+                          <DrawerTitle>Turn off two-factor authentication?</DrawerTitle>
                           <DrawerDescription>
-                            This will reset to the default email method.
+                            Signing in will need only your password.
                           </DrawerDescription>
                         </DrawerHeader>
                         <DrawerFooter className="pt-2">
@@ -349,9 +321,9 @@ export default function ProfilePage() {
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Disable app method?</AlertDialogTitle>
+                        <AlertDialogTitle>Turn off two-factor authentication?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This will reset to the default email method.
+                          Signing in will need only your password.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
@@ -366,7 +338,7 @@ export default function ProfilePage() {
           ) : (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Scan the QR code with your authenticator app, then enter the 6-digit code to switch to App method.
+                To turn it on, scan the QR code with an authenticator app, then enter the 6-digit code it shows.
               </p>
               <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
                 {twoFactorQrSrc ? (
@@ -406,7 +378,7 @@ export default function ProfilePage() {
                 </div>
                 <Button type="submit" disabled={isEnablingTwoFactor}>
                   {isEnablingTwoFactor && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Switch to App Method
+                  Turn on
                 </Button>
               </form>
             </div>
@@ -416,99 +388,6 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
-      <Card className="border-destructive/50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-destructive"><Trash2 className="h-5 w-5" /> Delete Account</CardTitle>
-          <CardDescription>Permanently delete your account and all associated data</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground mb-4">
-            This action cannot be undone. All your data, including domains and reports, will be permanently deleted.
-          </p>
-          {(() => {
-            const deleteTrigger = (
-              <Button variant="destructive">Delete Account</Button>
-            );
-
-            const deleteFormContent = (
-              <div className="space-y-2 py-4">
-                <Label htmlFor="confirmEmail">Type your email to confirm: <span className="font-mono text-foreground break-all">{user?.email}</span></Label>
-                <Input 
-                  id="confirmEmail" 
-                  type="email"
-                  placeholder="Enter your email"
-                  value={deleteConfirmEmail} 
-                  onChange={(e) => setDeleteConfirmEmail(e.target.value)} 
-                />
-              </div>
-            );
-
-            const deleteButton = (
-              <Button 
-                variant="destructive" 
-                onClick={handleDeleteAccount}
-                disabled={isDeleting || deleteConfirmEmail !== user?.email}
-              >
-                {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Delete Account
-              </Button>
-            );
-
-            const handleOpenChange = (open: boolean) => {
-              setDeleteDialogOpen(open);
-              if (!open) setDeleteConfirmEmail('');
-            };
-
-            if (isMobile) {
-              return (
-                <Drawer open={deleteDialogOpen} onOpenChange={handleOpenChange}>
-                  <DrawerTrigger asChild>
-                    {deleteTrigger}
-                  </DrawerTrigger>
-                  <DrawerContent>
-                    <DrawerHeader className="text-left">
-                      <DrawerTitle>Are you absolutely sure?</DrawerTitle>
-                      <DrawerDescription>
-                        This action cannot be undone. This will permanently delete your account and remove all your data from our servers.
-                      </DrawerDescription>
-                    </DrawerHeader>
-                    <div className="px-4">
-                      {deleteFormContent}
-                    </div>
-                    <DrawerFooter className="pt-2">
-                      {deleteButton}
-                      <DrawerClose asChild>
-                        <Button variant="outline">Cancel</Button>
-                      </DrawerClose>
-                    </DrawerFooter>
-                  </DrawerContent>
-                </Drawer>
-              );
-            }
-
-            return (
-              <AlertDialog open={deleteDialogOpen} onOpenChange={handleOpenChange}>
-                <AlertDialogTrigger asChild>
-                  {deleteTrigger}
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete your account and remove all your data from our servers.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  {deleteFormContent}
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    {deleteButton}
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            );
-          })()}
-        </CardContent>
-      </Card>
     </div>
   );
 }
