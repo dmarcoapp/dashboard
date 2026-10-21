@@ -20,18 +20,25 @@ export function AddDomainDialog() {
   const [copied, setCopied] = useState(false);
   const [configOpen, setConfigOpen] = useState(false);
   
-  // Policy settings - defaults to balanced settings for new users
-  const [policy, setPolicy] = useState<Policy>('quarantine');
-  const [subdomainPolicy, setSubdomainPolicy] = useState<Policy>('quarantine');
+  // A new domain starts at p=none: it only asks for reports and changes
+  // nothing about delivery until the reports show that legitimate mail passes.
+  const [policy, setPolicy] = useState<Policy>('none');
+  const [subdomainPolicy, setSubdomainPolicy] = useState<Policy>('none');
   const [dkimAlignment, setDkimAlignment] = useState<Alignment>('r');
   const [spfAlignment, setSpfAlignment] = useState<Alignment>('r');
   const [pct, setPct] = useState<Pct>('100');
   
-  const reportingUri = user?.sharedAggregatePostboxAddress ?? 'your-address@reports.example.com';
-  
-  const generatedRecord = `v=DMARC1; p=${policy}; sp=${subdomainPolicy}; rua=mailto:${reportingUri}; adkim=${dkimAlignment}; aspf=${spfAlignment}; pct=${pct}`;
+  // Without the real address there is nothing safe to show: a placeholder would
+  // end up in someone's DNS.
+  const reportingUri = user?.sharedAggregatePostboxAddress || null;
+  const reportDomain = reportingUri?.split('@')[1] ?? null;
+
+  const generatedRecord = reportingUri
+    ? `v=DMARC1; p=${policy}; sp=${subdomainPolicy}; rua=mailto:${reportingUri}; adkim=${dkimAlignment}; aspf=${spfAlignment}; pct=${pct}`
+    : null;
 
   const handleCopy = async () => {
+    if (!generatedRecord) return;
     await navigator.clipboard.writeText(generatedRecord);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -63,34 +70,42 @@ export function AddDomainDialog() {
       {/* Step 3 */}
       <div className="space-y-3">
         <h3 className="text-sm font-semibold">Step 3: Set the record value</h3>
-        <p className="text-sm text-muted-foreground">
-          Copy the following DMARC record and paste it as the TXT record value:
-        </p>
-        
-        <div className="space-y-2">
-          <p className="text-xs text-muted-foreground">Your DMARCo Reporting URI:</p>
-          <code className="block bg-muted p-2 rounded text-xs font-mono break-all">
-            mailto:{reportingUri}
-          </code>
-        </div>
-        
-        <div className="space-y-2">
-          <p className="text-xs text-muted-foreground">Your DMARC record (copy this):</p>
-          <div className="relative">
-            <code className="block bg-muted p-3 pr-12 rounded text-xs font-mono break-words whitespace-pre-wrap border-2 border-muted-foreground/50">
-              {generatedRecord}
-            </code>
-            <Button 
-              type="button" 
-              variant="ghost" 
-              size="icon" 
-              onClick={handleCopy}
-              className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
-            >
-              {copied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
-            </Button>
-          </div>
-        </div>
+        {generatedRecord ? (
+          <>
+            <p className="text-sm text-muted-foreground">
+              Copy the following DMARC record and paste it as the TXT record value:
+            </p>
+
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground">Your DMARCo Reporting URI:</p>
+              <code className="block bg-muted p-2 rounded text-xs font-mono break-all">
+                mailto:{reportingUri}
+              </code>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground">Your DMARC record (copy this):</p>
+              <div className="relative">
+                <code className="block bg-muted p-3 pr-12 rounded text-xs font-mono break-words whitespace-pre-wrap border-2 border-muted-foreground/50">
+                  {generatedRecord}
+                </code>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleCopy}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
+                >
+                  {copied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+          </>
+        ) : (
+          <p className="text-sm text-destructive">
+            Your reporting address could not be loaded, so there is no record to copy yet. Reload the page and try again.
+          </p>
+        )}
 
         {/* Collapsible Configuration */}
         <Collapsible open={configOpen} onOpenChange={setConfigOpen}>
@@ -113,14 +128,14 @@ export function AddDomainDialog() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="reject">
+                    <SelectItem value="none">
                       <span className="flex items-center gap-2">
-                        reject – Block failing emails
+                        none – Monitor only, start here
                         <Star className="h-3 w-3 text-success fill-success" />
                       </span>
                     </SelectItem>
                     <SelectItem value="quarantine">quarantine – Send to spam</SelectItem>
-                    <SelectItem value="none">none – Monitor only</SelectItem>
+                    <SelectItem value="reject">reject – Block failing emails</SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
@@ -136,14 +151,14 @@ export function AddDomainDialog() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="reject">
+                    <SelectItem value="none">
                       <span className="flex items-center gap-2">
-                        reject – Block failing emails
+                        none – Monitor only, start here
                         <Star className="h-3 w-3 text-success fill-success" />
                       </span>
                     </SelectItem>
                     <SelectItem value="quarantine">quarantine – Send to spam</SelectItem>
-                    <SelectItem value="none">none – Monitor only</SelectItem>
+                    <SelectItem value="reject">reject – Block failing emails</SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
@@ -223,15 +238,33 @@ export function AddDomainDialog() {
 
         <div className="bg-muted/50 p-4 rounded-lg">
           <p className="text-xs text-muted-foreground">
-            <strong>Note:</strong> The default record uses balanced settings suitable for most users.
-            Once you've verified your email sources are properly authenticated, consider upgrading to <code className="bg-muted px-1 rounded">p=reject</code> and <code className="bg-muted px-1 rounded">strict</code> alignment for maximum protection.
+            <strong>Note:</strong> The default record only asks for reports and changes nothing about how your mail is delivered.
+            Once the reports show that everything you send passes, move to <code className="bg-muted px-1 rounded">p=quarantine</code>, and then to <code className="bg-muted px-1 rounded">p=reject</code>.
           </p>
         </div>
       </div>
 
       {/* Step 4 */}
       <div className="space-y-3">
-        <h3 className="text-sm font-semibold">Step 4: Save and wait</h3>
+        <h3 className="text-sm font-semibold">Step 4: Check the report authorization</h3>
+        <p className="text-sm text-muted-foreground">
+          Mailbox providers send reports to an address on another domain only if that domain agrees to receive them.
+          The wildcard record from the installation, <code className="bg-muted px-1.5 py-0.5 rounded text-foreground break-all">*._report._dmarc.{reportDomain ?? 'REPORT_DOMAIN'}</code>, already does that for every domain.
+          Without it, add one TXT record per domain on the report domain:
+        </p>
+        <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1 ml-2">
+          <li><strong>Host/Name:</strong> <code className="bg-muted px-1.5 py-0.5 rounded text-foreground break-all">example.com._report._dmarc.{reportDomain ?? 'REPORT_DOMAIN'}</code>, with your domain in place of example.com</li>
+          <li><strong>Type:</strong> TXT</li>
+          <li><strong>Value:</strong> <code className="bg-muted px-1.5 py-0.5 rounded text-foreground">v=DMARC1</code></li>
+        </ul>
+        <p className="text-sm text-muted-foreground">
+          A domain that shares its registered domain with the report domain, such as example.com with reports arriving at dmarc.example.com, needs no authorization.
+        </p>
+      </div>
+
+      {/* Step 5 */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold">Step 5: Save and wait</h3>
         <p className="text-sm text-muted-foreground">
           Save the DNS record. It may take up to 48 hours for the changes to propagate. Once email providers start sending DMARC reports, your domain will automatically appear in DMARCo.
         </p>
