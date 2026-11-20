@@ -8,6 +8,7 @@ import type { NotificationsApi } from '@/types/api';
 import { ApiError } from '@/lib/api-client';
 import { useToast } from '@/hooks/use-toast';
 import { NotificationsPageSkeleton } from '@/components/skeletons';
+import { Link } from 'react-router-dom';
 
 type NotificationSettingKey = keyof NotificationsApi;
 const SAVE_DEBOUNCE_MS = 500;
@@ -119,8 +120,8 @@ export default function NotificationsPage() {
               Notification Preferences
             </CardTitle>
             <CardDescription>
-              Notifications arrive by email, so they need outgoing mail set up on the server, with{' '}
-              <code className="text-xs font-mono">MAILER_DSN</code> in its <code className="text-xs font-mono">.env</code>.
+              Notifications arrive by email, so they need outgoing mail, which is set up on the{' '}
+              <Link to="/platform" className="underline underline-offset-4 hover:text-foreground">Platform</Link> page.
               Without it, nothing is sent.
             </CardDescription>
           </CardHeader>

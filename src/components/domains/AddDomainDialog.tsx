@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
@@ -8,6 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Copy, Check, Plus, Star, ChevronDown, Settings2 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { intakeService } from '@/services/intake-service';
+import type { IntakeAddressApi } from '@/types/api';
 
 type Policy = 'reject' | 'quarantine' | 'none';
 type Alignment = 's' | 'r';
@@ -28,10 +31,35 @@ export function AddDomainDialog() {
   const [spfAlignment, setSpfAlignment] = useState<Alignment>('r');
   const [pct, setPct] = useState<Pct>('100');
   
+  // The addresses reports can go to: the mail gateway's, and each mailbox's.
+  const [addresses, setAddresses] = useState<IntakeAddressApi[] | null>(null);
+  const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
+  const fallbackAddress = user?.sharedAggregatePostboxAddress || null;
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    intakeService
+      .getAddresses()
+      .then((list) => {
+        if (!cancelled) setAddresses(list);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setAddresses(fallbackAddress ? [{ address: fallbackAddress, kind: 'gateway', label: 'Mail gateway' }] : []);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, fallbackAddress]);
+
   // Without the real address there is nothing safe to show: a placeholder would
   // end up in someone's DNS.
-  const reportingUri = user?.sharedAggregatePostboxAddress || null;
+  const chosen = addresses?.find((candidate) => candidate.address === selectedAddress) ?? addresses?.[0] ?? null;
+  const reportingUri = chosen?.address ?? null;
   const reportDomain = reportingUri?.split('@')[1] ?? null;
+  const isGateway = chosen?.kind === 'gateway';
 
   const generatedRecord = reportingUri
     ? `v=DMARC1; p=${policy}; sp=${subdomainPolicy}; rua=mailto:${reportingUri}; adkim=${dkimAlignment}; aspf=${spfAlignment}; pct=${pct}`
@@ -70,18 +98,39 @@ export function AddDomainDialog() {
       {/* Step 3 */}
       <div className="space-y-3">
         <h3 className="text-sm font-semibold">Step 3: Set the record value</h3>
-        {generatedRecord ? (
+        {addresses === null ? (
+          <p className="text-sm text-muted-foreground">Loading the report addresses...</p>
+        ) : generatedRecord ? (
           <>
             <p className="text-sm text-muted-foreground">
               Copy the following DMARC record and paste it as the TXT record value:
             </p>
 
-            <div className="space-y-2">
-              <p className="text-xs text-muted-foreground">Your DMARCo Reporting URI:</p>
-              <code className="block bg-muted p-2 rounded text-xs font-mono break-all">
-                mailto:{reportingUri}
-              </code>
-            </div>
+            {addresses.length > 1 ? (
+              <div className="space-y-2">
+                <Label htmlFor="report-address" className="text-xs text-muted-foreground font-normal">Send the reports to:</Label>
+                <Select value={reportingUri ?? undefined} onValueChange={setSelectedAddress}>
+                  <SelectTrigger id="report-address" className="text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {addresses.map((candidate) => (
+                      <SelectItem key={candidate.address} value={candidate.address}>
+                        <span className="font-mono text-xs">{candidate.address}</span>
+                        <span className="ml-2 text-xs text-muted-foreground">{candidate.label}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">Your DMARCo Reporting URI:</p>
+                <code className="block bg-muted p-2 rounded text-xs font-mono break-all">
+                  mailto:{reportingUri}
+                </code>
+              </div>
+            )}
 
             <div className="space-y-2">
               <p className="text-xs text-muted-foreground">Your DMARC record (copy this):</p>
@@ -103,7 +152,12 @@ export function AddDomainDialog() {
           </>
         ) : (
           <p className="text-sm text-destructive">
-            Your reporting address could not be loaded, so there is no record to copy yet. Reload the page and try again.
+            There is no report address yet, so there is no record to copy. Add a mailbox with a report address, or set up
+            the mail gateway, on the{' '}
+            <Link to="/platform?tab=intake" onClick={() => setOpen(false)} className="underline underline-offset-4">
+              Platform page
+            </Link>
+            .
           </p>
         )}
 
@@ -249,8 +303,13 @@ export function AddDomainDialog() {
         <h3 className="text-sm font-semibold">Step 4: Check the report authorization</h3>
         <p className="text-sm text-muted-foreground">
           Mailbox providers send reports to an address on another domain only if that domain agrees to receive them.
-          The wildcard record from the installation, <code className="bg-muted px-1.5 py-0.5 rounded text-foreground break-all">*._report._dmarc.{reportDomain ?? 'REPORT_DOMAIN'}</code>, already does that for every domain.
-          Without it, add one TXT record per domain on the report domain:
+          {isGateway ? (
+            <> The wildcard record from the installation, <code className="bg-muted px-1.5 py-0.5 rounded text-foreground break-all">*._report._dmarc.{reportDomain ?? 'REPORT_DOMAIN'}</code>, already does that for every domain.
+            Without it, add one TXT record per domain on the report domain:</>
+          ) : (
+            <> A wildcard TXT record, <code className="bg-muted px-1.5 py-0.5 rounded text-foreground break-all">*._report._dmarc.{reportDomain ?? 'REPORT_DOMAIN'}</code> with the value <code className="bg-muted px-1.5 py-0.5 rounded text-foreground">v=DMARC1</code>, does that for every domain at once.
+            Or add one TXT record per domain on the report domain. Either way the report address has to be on a domain you control.</>
+          )}
         </p>
         <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1 ml-2">
           <li><strong>Host/Name:</strong> <code className="bg-muted px-1.5 py-0.5 rounded text-foreground break-all">example.com._report._dmarc.{reportDomain ?? 'REPORT_DOMAIN'}</code>, with your domain in place of example.com</li>

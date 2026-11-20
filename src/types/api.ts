@@ -51,6 +51,132 @@ export interface NotificationsApi {
   weeklyOverviewNotificationEnabled: boolean;
 }
 
+// Platform Types
+export type SmtpSecurity = 'tls' | 'starttls' | 'none';
+
+export interface PlatformSettingsApi {
+  // 'legacy' while the settings still come from the server's .env, until the
+  // installer has generated APP_ENCRYPTION_KEY.
+  mode: 'platform' | 'legacy';
+  reportRetentionDays: number;
+  ipLookupEnabled: boolean;
+  mailConfigured: boolean;
+  smtpHost: string | null;
+  smtpPort: number | null;
+  smtpSecurity: SmtpSecurity | null;
+  smtpUsername: string | null;
+  smtpPasswordSet: boolean;
+  smtpPasswordUnreadable: boolean;
+  senderAddress: string | null;
+  effectiveSenderAddress: string;
+  defaultSenderAddress: string;
+  // The mail gateway's address, made from the report address domain.
+  reportAddress: string | null;
+  reportAddressDomain: string | null;
+  // Uploads with an API key, and the mail gateway's webhook, are taken only
+  // while this is on.
+  apiIntakeEnabled: boolean;
+  gatewaySecretSet: boolean;
+  unusedEnvironment: string[];
+  importedFromEnvironment: Record<string, string>;
+}
+
+// A field left out stays as it is. An empty string clears it.
+export interface PlatformSettingsUpdate {
+  reportRetentionDays?: number;
+  ipLookupEnabled?: boolean;
+  smtpHost?: string;
+  smtpPort?: number;
+  smtpSecurity?: SmtpSecurity;
+  smtpUsername?: string;
+  smtpPassword?: string;
+  senderAddress?: string;
+  apiIntakeEnabled?: boolean;
+  reportAddressDomain?: string;
+}
+
+export interface TestEmailResultApi {
+  sent: boolean;
+  recipient: string;
+  error: string | null;
+}
+
+// Report intake Types
+export type MailboxSecurity = 'tls' | 'starttls';
+export type MailboxAfterImport = 'mark_seen' | 'move' | 'delete' | 'leave';
+
+export interface MailboxApi {
+  id: string;
+  name: string;
+  host: string;
+  port: number;
+  security: MailboxSecurity;
+  username: string;
+  authMethod: 'password';
+  // Stored with another APP_ENCRYPTION_KEY, so it has to be entered again.
+  passwordUnreadable: boolean;
+  folder: string;
+  reportAddress: string | null;
+  afterImport: MailboxAfterImport;
+  moveToFolder: string | null;
+  enabled: boolean;
+  pollIntervalMinutes: number;
+  firstImportDays: number;
+  lastPolledAt: ApiDateObject | null;
+  lastSuccessAt: ApiDateObject | null;
+  lastError: string | null;
+  consecutiveFailures: number;
+  createdAt: ApiDateObject | null;
+}
+
+// A field left out stays as it is. The password is never sent back, and an
+// empty one keeps the stored password.
+export interface MailboxInput {
+  name?: string;
+  host?: string;
+  port?: number;
+  security?: MailboxSecurity;
+  username?: string;
+  password?: string;
+  folder?: string;
+  reportAddress?: string;
+  afterImport?: MailboxAfterImport;
+  moveToFolder?: string;
+  enabled?: boolean;
+  pollIntervalMinutes?: number;
+  firstImportDays?: number;
+}
+
+export interface MailboxTestResultApi {
+  ok: boolean;
+  error: string | null;
+  messages: number | null;
+  folders: string[];
+}
+
+export interface MailboxLogEntryApi {
+  level: 'info' | 'warning' | 'error';
+  message: string;
+  context: Record<string, string | number | boolean | null>;
+  createdAt: ApiDateObject;
+}
+
+export interface ApiIntakeKeyApi {
+  id: string;
+  name: string;
+  preview: string;
+  createdAt: ApiDateObject;
+  lastUsedAt: ApiDateObject | null;
+  // Only in the answer that made the key.
+  token: string | null;
+}
+
+export interface IntakeAddressApi {
+  address: string;
+  kind: 'gateway' | 'mailbox';
+  label: string;
+}
+
 // Date object from API
 export interface ApiDateObject {
   date: string;

@@ -17,8 +17,8 @@
 > [!IMPORTANT]
 > **Start at [dmarcoapp/dmarcoapp](https://github.com/dmarcoapp/dmarcoapp).**
 > That repository installs all of DMARCo with one command: this dashboard, the
-> backend, and the mail gateway. It is also the issue tracker for the whole
-> project, so
+> backend, and the mail gateway if you want it. It is also the issue tracker for
+> the whole project, so
 > [report anything that goes wrong there](https://github.com/dmarcoapp/dmarcoapp/issues/new/choose),
 > including problems in this component. What follows is one component's source,
 > for people working on it.
@@ -42,8 +42,9 @@ This repository contains the frontend application:
 - mock mode for trying the UI without a backend
 
 The dashboard expects a backend API that exposes the `/v1` endpoints used by the
-app, normally [`dmarcoapp/backend`](https://github.com/dmarcoapp/backend). For
-inbound report collection, see
+app, normally [`dmarcoapp/backend`](https://github.com/dmarcoapp/backend).
+Reports come in through mailboxes the backend reads over IMAP, uploads with an
+API key, or a mail gateway such as
 [`dmarcoapp/mail-inbound`](https://github.com/dmarcoapp/mail-inbound).
 
 ## Features
@@ -57,6 +58,8 @@ inbound report collection, see
 - Domain list and per-domain pages with the published DMARC record, a protection
   level, and DKIM and SPF alignment
 - Blocklist management
+- A Platform page for report retention, IP lookups, outgoing mail, IMAP
+  mailboxes, API keys for report uploads, and the mail gateway
 - Login with optional two-factor authentication by authenticator app, profile,
   and notification settings
 - Responsive layout for desktop and mobile
@@ -139,20 +142,23 @@ source is `http://localhost:8000`.
 The dashboard calls these endpoint groups:
 
 - `/v1/auth/*` for login, token refresh, and whether an account exists yet
-- `/v1/user/*` for profile, logout, 2FA, notifications, and blocklist
+- `/v1/user/*` for profile, logout, 2FA, and notifications
+- `/v1/platform/*` for the platform settings, the test email, mailboxes, API
+  keys, the gateway secret, and the addresses reports can go to
 - `/v1/dmarc/reports` for report lists, report detail, records, XML, and
   deletion
 - `/v1/dmarc/domains` for domain lists and domain detail
-- `/v1/user/dashboard` for aggregate dashboard statistics
+- `/v1/blocklist` for the sender blocklist
+- `/v1/dashboard` for aggregate dashboard statistics
 
 Authentication uses bearer tokens stored in browser local storage. The frontend
 automatically attempts token refresh on `401` responses.
 
 ## Production
 
-For a full DMARCo installation, including the backend and the inbound mail
-gateway, use [`dmarcoapp/dmarcoapp`](https://github.com/dmarcoapp/dmarcoapp). It
-ships a ready-made Docker Compose stack and an installer.
+For a full DMARCo installation, including the backend, use
+[`dmarcoapp/dmarcoapp`](https://github.com/dmarcoapp/dmarcoapp). It ships a
+ready-made Docker Compose stack and an installer.
 
 To run only the dashboard, use the published image:
 
@@ -222,8 +228,9 @@ contribution guide is in [`CONTRIBUTING.md`](CONTRIBUTING.md).
   Docker Compose stack and installer for the full application
 - [`dmarcoapp/backend`](https://github.com/dmarcoapp/backend): API, workers, and
   report processing pipeline
-- [`dmarcoapp/mail-inbound`](https://github.com/dmarcoapp/mail-inbound):
-  self-hostable inbound mail gateway for DMARC aggregate reports
+- [`dmarcoapp/mail-inbound`](https://github.com/dmarcoapp/mail-inbound): the
+  mail gateway that receives report email on port 25, being retired in favor of
+  mailboxes read over IMAP
 
 ## License
 

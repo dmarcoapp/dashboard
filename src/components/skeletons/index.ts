@@ -5,3 +5,4 @@ export { DomainDetailSkeleton } from './DomainDetailSkeleton';
 export { ReportsPageSkeleton } from './ReportsPageSkeleton';
 export { ReportDetailSkeleton } from './ReportDetailSkeleton';
 export { NotificationsPageSkeleton } from './NotificationsPageSkeleton';
+export { PlatformPageSkeleton } from './PlatformPageSkeleton';

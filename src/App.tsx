@@ -22,6 +22,7 @@ import DomainDetailPage from "@/pages/DomainDetailPage";
 import BlocklistPage from "@/pages/BlocklistPage";
 import ProfilePage from "@/pages/ProfilePage";
 import NotificationsPage from "@/pages/NotificationsPage";
+import PlatformPage from "@/pages/PlatformPage";
 
 import NotFound from "@/pages/NotFound";
 
@@ -53,6 +54,7 @@ const App = () => (
               <Route path="blocklist" element={<BlocklistPage />} />
               <Route path="profile" element={<ProfilePage />} />
               <Route path="notifications" element={<NotificationsPage />} />
+              <Route path="platform" element={<PlatformPage />} />
             </Route>
             
             <Route path="*" element={<NotFound />} />

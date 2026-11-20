@@ -1,13 +1,4 @@
-import type {
-  User,
-  TwoFactorProfile,
-  ReportApi,
-  ReportsResponse,
-  DashboardApi,
-  ReportRecordApi,
-  RecordsResponse,
-  NotificationsApi,
-} from '@/types/api';
+import type { User, TwoFactorProfile, ReportApi, ReportsResponse, DashboardApi, ReportRecordApi, RecordsResponse, NotificationsApi, PlatformSettingsApi, ApiDateObject, ApiIntakeKeyApi, MailboxApi, MailboxLogEntryApi } from '@/types/api';
 
 export const mockUser: User = {
   id: 'mock-user-1',
@@ -28,6 +19,94 @@ export const mockNotificationSettings: NotificationsApi = {
   unusualNewLoginNotificationEnabled: true,
   weeklyOverviewNotificationEnabled: true,
 };
+
+export const mockPlatformSettings: PlatformSettingsApi = {
+  mode: 'platform',
+  reportRetentionDays: 365,
+  ipLookupEnabled: true,
+  mailConfigured: true,
+  smtpHost: 'smtp.example.com',
+  smtpPort: 587,
+  smtpSecurity: 'starttls',
+  smtpUsername: 'dmarco@example.com',
+  smtpPasswordSet: true,
+  smtpPasswordUnreadable: false,
+  senderAddress: null,
+  effectiveSenderAddress: 'no-reply@dmarc.example.com',
+  defaultSenderAddress: 'no-reply@dmarc.example.com',
+  reportAddress: 'xxxxxxxxxxxxxx@reports.example.com',
+  reportAddressDomain: 'reports.example.com',
+  apiIntakeEnabled: true,
+  gatewaySecretSet: true,
+  unusedEnvironment: ['MAILER_DSN'],
+  importedFromEnvironment: { MAILER_DSN: '2026-11-20T12:00:00+00:00' },
+};
+
+const mockDate = (date: string): ApiDateObject => ({ date: `${date}.000000`, timezone_type: 3, timezone: 'UTC' });
+
+export const mockMailboxes: MailboxApi[] = [
+  {
+    id: '0193a1b2-0000-7000-8000-000000000001',
+    name: 'DMARC reports',
+    host: 'imap.example.com',
+    port: 993,
+    security: 'tls',
+    username: 'dmarc@example.com',
+    authMethod: 'password',
+    passwordUnreadable: false,
+    folder: 'INBOX',
+    reportAddress: 'dmarc@example.com',
+    afterImport: 'move',
+    moveToFolder: 'Processed',
+    enabled: true,
+    pollIntervalMinutes: 15,
+    firstImportDays: 30,
+    lastPolledAt: mockDate('2026-11-20 11:45:00'),
+    lastSuccessAt: mockDate('2026-11-20 11:45:00'),
+    lastError: null,
+    consecutiveFailures: 0,
+    createdAt: mockDate('2026-11-01 09:00:00'),
+  },
+  {
+    id: '0193a1b2-0000-7000-8000-000000000002',
+    name: 'Old provider',
+    host: 'mail.example.net',
+    port: 143,
+    security: 'starttls',
+    username: 'reports',
+    authMethod: 'password',
+    passwordUnreadable: false,
+    folder: 'DMARC',
+    reportAddress: null,
+    afterImport: 'mark_seen',
+    moveToFolder: null,
+    enabled: true,
+    pollIntervalMinutes: 60,
+    firstImportDays: 30,
+    lastPolledAt: mockDate('2026-11-20 11:00:00'),
+    lastSuccessAt: mockDate('2026-11-18 08:00:00'),
+    lastError: 'The server refused the username or the password.',
+    consecutiveFailures: 3,
+    createdAt: mockDate('2026-10-12 14:30:00'),
+  },
+];
+
+export const mockMailboxLog: MailboxLogEntryApi[] = [
+  { level: 'info', message: 'Read 2 messages: 2 reports stored, 0 skipped.', context: {}, createdAt: mockDate('2026-11-20 11:45:00') },
+  { level: 'warning', message: 'Skipped an attachment that is not a valid DMARC aggregate report.', context: { uid: 4182 }, createdAt: mockDate('2026-11-20 08:15:00') },
+  { level: 'info', message: 'Read 1 message: 1 report stored, 0 skipped.', context: {}, createdAt: mockDate('2026-11-19 23:30:00') },
+];
+
+export const mockApiIntakeKeys: ApiIntakeKeyApi[] = [
+  {
+    id: '0193a1b2-0000-7000-8000-000000000101',
+    name: 'Backup mail server',
+    preview: 'dmarco_k3n8q2v7w1x5z9b4_…',
+    createdAt: mockDate('2026-11-02 10:00:00'),
+    lastUsedAt: mockDate('2026-11-20 06:12:00'),
+    token: null,
+  },
+];
 
 export const mockDashboard: DashboardApi = {
   reportCount: 156,

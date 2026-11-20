@@ -20,6 +20,21 @@ export const API_ENDPOINTS = {
   enableTwoFactorApp: '/v1/user/profile/2fa/app/enable',
   disableTwoFactorApp: '/v1/user/profile/2fa/app/disable',
   notifications: '/v1/user/notifications',
+
+  // Platform
+  platformSettings: '/v1/platform/settings',
+  platformTestEmail: '/v1/platform/mailer/test',
+  mailboxes: '/v1/platform/mailboxes',
+  mailboxById: (id: string) => `/v1/platform/mailboxes/${id}`,
+  mailboxTest: (id: string) => `/v1/platform/mailboxes/${id}/test`,
+  mailboxPoll: (id: string) => `/v1/platform/mailboxes/${id}/poll`,
+  mailboxLog: (id: string) => `/v1/platform/mailboxes/${id}/log`,
+  intakeKeys: '/v1/platform/intake/keys',
+  intakeKeyById: (id: string) => `/v1/platform/intake/keys/${id}`,
+  intakeGatewaySecret: '/v1/platform/intake/gateway-secret',
+  intakeAddresses: '/v1/platform/intake/addresses',
+  // Called by whatever sends reports in, with an API key, not by the dashboard.
+  intakeReports: '/v1/intake/reports',
   
   // Reports
   reports: '/v1/dmarc/reports',
@@ -32,9 +47,9 @@ export const API_ENDPOINTS = {
   domainById: (id: string) => `/v1/dmarc/domains/${id}`,
 
   // Blocklist
-  blocklist: '/v1/user/blocklist',
-  blocklistById: (id: string) => `/v1/user/blocklist/${id}`,
+  blocklist: '/v1/blocklist',
+  blocklistById: (id: string) => `/v1/blocklist/${id}`,
   
   // Dashboard
-  dashboard: '/v1/user/dashboard',
+  dashboard: '/v1/dashboard',
 } as const;

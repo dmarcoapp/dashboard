@@ -7,6 +7,7 @@ import {
   User,
   Shield,
   BellRing,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import {
@@ -38,6 +39,7 @@ const navigationItems = [
 
 const settingsItems = [
   { title: 'Profile', url: '/profile', icon: User },
+  { title: 'Platform', url: '/platform', icon: SlidersHorizontal },
   { title: 'Notifications', url: '/notifications', icon: BellRing },
   { title: 'Blocklist', url: '/blocklist', icon: Ban },
 ];
