@@ -178,21 +178,21 @@ export const intakeService = {
     await apiClient.delete<void>(API_ENDPOINTS.intakeKeyById(id));
   },
 
-  async createGatewaySecret(): Promise<string> {
+  async createWebhookSecret(): Promise<string> {
     if (appConfig.mockMode) {
-      mockPlatformState.set({ gatewaySecretSet: true });
+      mockPlatformState.set({ webhookSecretSet: true });
       return randomString(48);
     }
-    const { secret } = await apiClient.post<{ secret: string }>(API_ENDPOINTS.intakeGatewaySecret);
+    const { secret } = await apiClient.post<{ secret: string }>(API_ENDPOINTS.intakeWebhookSecret);
     return secret;
   },
 
-  async removeGatewaySecret(): Promise<void> {
+  async removeWebhookSecret(): Promise<void> {
     if (appConfig.mockMode) {
-      mockPlatformState.set({ gatewaySecretSet: false });
+      mockPlatformState.set({ webhookSecretSet: false });
       return;
     }
-    await apiClient.delete<void>(API_ENDPOINTS.intakeGatewaySecret);
+    await apiClient.delete<void>(API_ENDPOINTS.intakeWebhookSecret);
   },
 
   async getAddresses(): Promise<IntakeAddressApi[]> {
@@ -200,8 +200,8 @@ export const intakeService = {
       await mockDelay();
       const settings = mockPlatformState.get();
       const addresses: IntakeAddressApi[] = [];
-      if (settings.reportAddress && settings.apiIntakeEnabled) {
-        addresses.push({ address: settings.reportAddress, kind: 'gateway', label: 'Mail gateway' });
+      if (settings.reportAddress && settings.apiIntakeEnabled && settings.webhookEnabled) {
+        addresses.push({ address: settings.reportAddress, kind: 'webhook', label: 'Webhook' });
       }
       for (const mailbox of currentMockMailboxes) {
         if (mailbox.enabled && mailbox.reportAddress) {

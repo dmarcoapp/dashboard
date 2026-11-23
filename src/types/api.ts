@@ -70,13 +70,15 @@ export interface PlatformSettingsApi {
   senderAddress: string | null;
   effectiveSenderAddress: string;
   defaultSenderAddress: string;
-  // The mail gateway's address, made from the report address domain.
+  // The webhook's report address, made from the report address domain.
   reportAddress: string | null;
   reportAddressDomain: string | null;
-  // Uploads with an API key, and the mail gateway's webhook, are taken only
-  // while this is on.
+  // The API switch, and one each for the upload endpoint and the webhook,
+  // which take reports only while the API switch is on as well.
   apiIntakeEnabled: boolean;
-  gatewaySecretSet: boolean;
+  uploadEndpointEnabled: boolean;
+  webhookEnabled: boolean;
+  webhookSecretSet: boolean;
   unusedEnvironment: string[];
   importedFromEnvironment: Record<string, string>;
 }
@@ -92,6 +94,8 @@ export interface PlatformSettingsUpdate {
   smtpPassword?: string;
   senderAddress?: string;
   apiIntakeEnabled?: boolean;
+  uploadEndpointEnabled?: boolean;
+  webhookEnabled?: boolean;
   reportAddressDomain?: string;
 }
 
@@ -173,7 +177,7 @@ export interface ApiIntakeKeyApi {
 
 export interface IntakeAddressApi {
   address: string;
-  kind: 'gateway' | 'mailbox';
+  kind: 'webhook' | 'mailbox';
   label: string;
 }
 

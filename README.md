@@ -59,7 +59,7 @@ API key, or a mail gateway such as
   level, and DKIM and SPF alignment
 - Blocklist management
 - A Platform page for report retention, IP lookups, outgoing mail, IMAP
-  mailboxes, API keys for report uploads, and the mail gateway
+  mailboxes, and the API's upload endpoint and webhook
 - Login with optional two-factor authentication by authenticator app, profile,
   and notification settings
 - Responsive layout for desktop and mobile
@@ -144,7 +144,7 @@ The dashboard calls these endpoint groups:
 - `/v1/auth/*` for login, token refresh, and whether an account exists yet
 - `/v1/user/*` for profile, logout, 2FA, and notifications
 - `/v1/platform/*` for the platform settings, the test email, mailboxes, API
-  keys, the gateway secret, and the addresses reports can go to
+  keys, the webhook secret, and the addresses reports can go to
 - `/v1/dmarc/reports` for report lists, report detail, records, XML, and
   deletion
 - `/v1/dmarc/domains` for domain lists and domain detail

@@ -28,7 +28,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ApiError } from '@/lib/api-client';
-import { Loader2, User, Lock, Copy, Check } from 'lucide-react';
+import { Loader2, User, Lock } from 'lucide-react';
 import type { TwoFactorProfile } from '@/types/api';
 
 export default function ProfilePage() {
@@ -43,7 +43,6 @@ export default function ProfilePage() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [copied, setCopied] = useState(false);
   
   const [disableTwoFactorDialogOpen, setDisableTwoFactorDialogOpen] = useState(false);
   const [twoFactorCode, setTwoFactorCode] = useState('');
@@ -79,14 +78,6 @@ export default function ProfilePage() {
   useEffect(() => {
     refreshTwoFactor();
   }, [refreshTwoFactor]);
-
-  const handleCopyPostbox = async () => {
-    if (user?.sharedAggregatePostboxAddress) {
-      await navigator.clipboard.writeText('mailto:'+user.sharedAggregatePostboxAddress);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
 
   const handleUpdateName = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -208,15 +199,6 @@ export default function ProfilePage() {
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input id="email" value={user?.email ?? ''} disabled className="bg-muted" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="postbox">DMARCo Reporting URI for Aggregate</Label>
-              <div className="relative">
-                <Input id="postbox" value={`mailto:${user?.sharedAggregatePostboxAddress ?? ''}`} disabled className="bg-muted font-mono text-xs pr-10" />
-                <Button type="button" variant="ghost" size="icon" onClick={handleCopyPostbox} className="absolute right-0 top-0 h-full">
-                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                </Button>
-              </div>
             </div>
             <Button type="submit" disabled={isUpdatingName}>
               {isUpdatingName && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Save Changes

@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
-import { User, LogOut, Settings, Menu, SlidersHorizontal } from 'lucide-react';
+import { User, LogOut, Settings, Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface HeaderProps {
@@ -56,11 +56,11 @@ export function Header({ onMenuClick, showMenuButton }: HeaderProps) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => navigate('/profile')}>
-              <Settings className="mr-2 h-4 w-4" />
+              <User className="mr-2 h-4 w-4" />
               Profile
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => navigate('/platform')}>
-              <SlidersHorizontal className="mr-2 h-4 w-4" />
+              <Settings className="mr-2 h-4 w-4" />
               Platform
             </DropdownMenuItem>
             <DropdownMenuSeparator />

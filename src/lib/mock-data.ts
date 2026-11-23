@@ -37,7 +37,9 @@ export const mockPlatformSettings: PlatformSettingsApi = {
   reportAddress: 'xxxxxxxxxxxxxx@reports.example.com',
   reportAddressDomain: 'reports.example.com',
   apiIntakeEnabled: true,
-  gatewaySecretSet: true,
+  uploadEndpointEnabled: true,
+  webhookEnabled: true,
+  webhookSecretSet: true,
   unusedEnvironment: ['MAILER_DSN'],
   importedFromEnvironment: { MAILER_DSN: '2026-11-20T12:00:00+00:00' },
 };

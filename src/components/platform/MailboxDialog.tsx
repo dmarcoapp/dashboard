@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { AlertTriangle, Loader2 } from 'lucide-react';
+import { AlertTriangle, ChevronDown, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   Dialog,
   DialogContent,
@@ -22,8 +23,8 @@ import type { MailboxAfterImport, MailboxApi, MailboxInput, MailboxSecurity } fr
 const DEFAULT_PORTS: Record<MailboxSecurity, number> = { tls: 993, starttls: 143 };
 
 const SECURITY_LABELS: Record<MailboxSecurity, string> = {
-  tls: 'TLS, usually port 993',
-  starttls: 'STARTTLS, usually port 143',
+  tls: 'TLS (port 993)',
+  starttls: 'STARTTLS (port 143)',
 };
 
 interface MailboxDialogProps {
@@ -75,11 +76,13 @@ const parseInteger = (value: string, min: number, max: number): number | null =>
 export function MailboxDialog({ mailbox, open, onOpenChange, onSaved }: MailboxDialogProps) {
   const [form, setForm] = useState<FormState>(() => initialState(mailbox));
   const [error, setError] = useState<string | null>(null);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (open) {
       setForm(initialState(mailbox));
+      setAdvancedOpen(false);
       setError(null);
     }
   }, [open, mailbox]);
@@ -106,9 +109,9 @@ export function MailboxDialog({ mailbox, open, onOpenChange, onSaved }: MailboxD
     const port = parseInteger(form.port, 1, 65535);
     if (port === null) return 'Enter a port between 1 and 65535.';
     const interval = parseInteger(form.pollIntervalMinutes, 5, 1440);
-    if (interval === null) return 'Read the mailbox every 5 to 1440 minutes.';
+    if (interval === null) return 'Enter a poll interval between 5 and 1440 minutes.';
     const firstImportDays = parseInteger(form.firstImportDays, 0, 365);
-    if (firstImportDays === null) return 'Go back 0 to 365 days on the first read.';
+    if (firstImportDays === null) return 'Enter an initial import between 0 and 365 days.';
     const folder = form.folder.trim() || 'INBOX';
     if (/[*%]/.test(folder)) return 'A folder name cannot hold * or %.';
     if (form.afterImport === 'move') {
@@ -139,6 +142,7 @@ export function MailboxDialog({ mailbox, open, onOpenChange, onSaved }: MailboxD
     event.preventDefault();
     const input = validate();
     if (typeof input === 'string') {
+      if (/poll interval|initial import/i.test(input)) setAdvancedOpen(true);
       setError(input);
       return;
     }
@@ -160,9 +164,9 @@ export function MailboxDialog({ mailbox, open, onOpenChange, onSaved }: MailboxD
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{mailbox ? `Edit ${mailbox.name}` : 'Add a mailbox'}</DialogTitle>
+          <DialogTitle>{mailbox ? `Edit ${mailbox.name}` : 'Add Mailbox'}</DialogTitle>
           <DialogDescription>
-            DMARCo reads the mailbox over IMAP and stores the reports it finds. Other mail stays as it is.
+            Only messages with a report attachment are processed.
           </DialogDescription>
         </DialogHeader>
 
@@ -171,7 +175,7 @@ export function MailboxDialog({ mailbox, open, onOpenChange, onSaved }: MailboxD
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
-                The stored password was encrypted with another APP_ENCRYPTION_KEY. Enter it again.
+                The stored password was encrypted with a different APP_ENCRYPTION_KEY. Enter it again.
               </AlertDescription>
             </Alert>
           )}
@@ -190,7 +194,7 @@ export function MailboxDialog({ mailbox, open, onOpenChange, onSaved }: MailboxD
 
           <div className="grid gap-4 sm:grid-cols-[1fr_8rem]">
             <div className="space-y-2">
-              <Label htmlFor="mailbox-host">IMAP server</Label>
+              <Label htmlFor="mailbox-host">IMAP Server</Label>
               <Input
                 id="mailbox-host"
                 value={form.host}
@@ -229,7 +233,7 @@ export function MailboxDialog({ mailbox, open, onOpenChange, onSaved }: MailboxD
               </SelectContent>
             </Select>
             <p className="text-sm text-muted-foreground">
-              The server's certificate is always checked. There is no unencrypted option.
+              The server certificate is always verified.
             </p>
           </div>
 
@@ -251,14 +255,14 @@ export function MailboxDialog({ mailbox, open, onOpenChange, onSaved }: MailboxD
                 type="password"
                 value={form.password}
                 onChange={(event) => set('password', event.target.value)}
-                placeholder={mailbox && !mailbox.passwordUnreadable ? 'Stored, leave empty to keep it' : ''}
+                placeholder={mailbox && !mailbox.passwordUnreadable ? 'Leave empty to keep the current password' : ''}
                 maxLength={1024}
                 autoComplete="new-password"
               />
             </div>
           </div>
           <p className="-mt-2 text-sm text-muted-foreground">
-            An app password, if the provider offers one. It is stored encrypted and never shown again.
+            Use an app password if the provider supports it. Stored encrypted.
           </p>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -274,7 +278,7 @@ export function MailboxDialog({ mailbox, open, onOpenChange, onSaved }: MailboxD
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="mailbox-report-address">Report address (optional)</Label>
+              <Label htmlFor="mailbox-report-address">Report Address</Label>
               <Input
                 id="mailbox-report-address"
                 type="email"
@@ -287,13 +291,12 @@ export function MailboxDialog({ mailbox, open, onOpenChange, onSaved }: MailboxD
             </div>
           </div>
           <p className="-mt-2 text-sm text-muted-foreground">
-            The address that DMARC records send reports to, if it lands in this mailbox. It is offered when you add a
-            domain.
+            Optional. The rua address that delivers to this mailbox, offered when adding a domain.
           </p>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="mailbox-after-import">Once a report is stored</Label>
+              <Label htmlFor="mailbox-after-import">After Import</Label>
               <Select value={form.afterImport} onValueChange={(value) => set('afterImport', value as MailboxAfterImport)}>
                 <SelectTrigger id="mailbox-after-import">
                   <SelectValue />
@@ -309,7 +312,7 @@ export function MailboxDialog({ mailbox, open, onOpenChange, onSaved }: MailboxD
             </div>
             {form.afterImport === 'move' && (
               <div className="space-y-2">
-                <Label htmlFor="mailbox-move-to">Move to folder</Label>
+                <Label htmlFor="mailbox-move-to">Target Folder</Label>
                 <Input
                   id="mailbox-move-to"
                   value={form.moveToFolder}
@@ -323,49 +326,59 @@ export function MailboxDialog({ mailbox, open, onOpenChange, onSaved }: MailboxD
           </div>
           {form.afterImport === 'delete' && (
             <p className="-mt-2 text-sm text-muted-foreground">
-              DMARCo never expunges, so the mail client or the server removes the message later.
+              Messages are flagged only, never expunged.
             </p>
           )}
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="mailbox-interval">Read every</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  id="mailbox-interval"
-                  type="number"
-                  inputMode="numeric"
-                  min={5}
-                  max={1440}
-                  value={form.pollIntervalMinutes}
-                  onChange={(event) => set('pollIntervalMinutes', event.target.value)}
-                  className="w-28"
-                />
-                <span className="text-sm text-muted-foreground">minutes</span>
+          <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
+            <CollapsibleTrigger asChild>
+              <Button type="button" variant="ghost" size="sm" className="-ml-3 text-muted-foreground hover:text-foreground">
+                <ChevronDown className={`mr-2 h-4 w-4 transition-transform ${advancedOpen ? 'rotate-180' : ''}`} />
+                Advanced
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-3">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="mailbox-interval">Poll Interval</Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="mailbox-interval"
+                      type="number"
+                      inputMode="numeric"
+                      min={5}
+                      max={1440}
+                      value={form.pollIntervalMinutes}
+                      onChange={(event) => set('pollIntervalMinutes', event.target.value)}
+                      className="w-28"
+                    />
+                    <span className="text-sm text-muted-foreground">minutes</span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="mailbox-first-import">Initial Import</Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="mailbox-first-import"
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      max={365}
+                      value={form.firstImportDays}
+                      onChange={(event) => set('firstImportDays', event.target.value)}
+                      className="w-28"
+                    />
+                    <span className="text-sm text-muted-foreground">days (0 for all)</span>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="mailbox-first-import">On the first read, go back</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  id="mailbox-first-import"
-                  type="number"
-                  inputMode="numeric"
-                  min={0}
-                  max={365}
-                  value={form.firstImportDays}
-                  onChange={(event) => set('firstImportDays', event.target.value)}
-                  className="w-28"
-                />
-                <span className="text-sm text-muted-foreground">days, 0 for all mail</span>
-              </div>
-            </div>
-          </div>
+            </CollapsibleContent>
+          </Collapsible>
 
           <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-4">
             <div className="space-y-1">
-              <Label htmlFor="mailbox-enabled" className="text-base">Read this mailbox</Label>
-              <p className="text-sm text-muted-foreground">Switched off, the mailbox is kept but not read.</p>
+              <Label htmlFor="mailbox-enabled" className="text-base">Enabled</Label>
+              <p className="text-sm text-muted-foreground">Disabled mailboxes are kept but not polled.</p>
             </div>
             <Switch
               id="mailbox-enabled"

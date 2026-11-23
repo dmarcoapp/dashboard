@@ -24,17 +24,18 @@ export const API_ENDPOINTS = {
   // Platform
   platformSettings: '/v1/platform/settings',
   platformTestEmail: '/v1/platform/mailer/test',
-  mailboxes: '/v1/platform/mailboxes',
-  mailboxById: (id: string) => `/v1/platform/mailboxes/${id}`,
-  mailboxTest: (id: string) => `/v1/platform/mailboxes/${id}/test`,
-  mailboxPoll: (id: string) => `/v1/platform/mailboxes/${id}/poll`,
-  mailboxLog: (id: string) => `/v1/platform/mailboxes/${id}/log`,
+  mailboxes: '/v1/platform/intake/mailboxes',
+  mailboxById: (id: string) => `/v1/platform/intake/mailboxes/${id}`,
+  mailboxTest: (id: string) => `/v1/platform/intake/mailboxes/${id}/test`,
+  mailboxPoll: (id: string) => `/v1/platform/intake/mailboxes/${id}/poll`,
+  mailboxLog: (id: string) => `/v1/platform/intake/mailboxes/${id}/log`,
   intakeKeys: '/v1/platform/intake/keys',
   intakeKeyById: (id: string) => `/v1/platform/intake/keys/${id}`,
-  intakeGatewaySecret: '/v1/platform/intake/gateway-secret',
+  intakeWebhookSecret: '/v1/platform/intake/webhook-secret',
   intakeAddresses: '/v1/platform/intake/addresses',
-  // Called by whatever sends reports in, with an API key, not by the dashboard.
+  // Called by whatever sends reports in, not by the dashboard.
   intakeReports: '/v1/intake/reports',
+  intakeWebhook: '/v1/intake/webhook',
   
   // Reports
   reports: '/v1/dmarc/reports',

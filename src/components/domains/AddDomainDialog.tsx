@@ -31,7 +31,7 @@ export function AddDomainDialog() {
   const [spfAlignment, setSpfAlignment] = useState<Alignment>('r');
   const [pct, setPct] = useState<Pct>('100');
   
-  // The addresses reports can go to: the mail gateway's, and each mailbox's.
+  // The addresses reports can go to: the webhook's, and each mailbox's.
   const [addresses, setAddresses] = useState<IntakeAddressApi[] | null>(null);
   const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
   const fallbackAddress = user?.sharedAggregatePostboxAddress || null;
@@ -46,7 +46,7 @@ export function AddDomainDialog() {
       })
       .catch(() => {
         if (!cancelled) {
-          setAddresses(fallbackAddress ? [{ address: fallbackAddress, kind: 'gateway', label: 'Mail gateway' }] : []);
+          setAddresses(fallbackAddress ? [{ address: fallbackAddress, kind: 'webhook', label: 'Webhook' }] : []);
         }
       });
     return () => {
@@ -59,7 +59,7 @@ export function AddDomainDialog() {
   const chosen = addresses?.find((candidate) => candidate.address === selectedAddress) ?? addresses?.[0] ?? null;
   const reportingUri = chosen?.address ?? null;
   const reportDomain = reportingUri?.split('@')[1] ?? null;
-  const isGateway = chosen?.kind === 'gateway';
+  const isWebhook = chosen?.kind === 'webhook';
 
   const generatedRecord = reportingUri
     ? `v=DMARC1; p=${policy}; sp=${subdomainPolicy}; rua=mailto:${reportingUri}; adkim=${dkimAlignment}; aspf=${spfAlignment}; pct=${pct}`
@@ -152,8 +152,7 @@ export function AddDomainDialog() {
           </>
         ) : (
           <p className="text-sm text-destructive">
-            There is no report address yet, so there is no record to copy. Add a mailbox with a report address, or set up
-            the mail gateway, on the{' '}
+            No report address is configured. Add a mailbox with a report address or enable the webhook on the{' '}
             <Link to="/platform?tab=intake" onClick={() => setOpen(false)} className="underline underline-offset-4">
               Platform page
             </Link>
@@ -303,7 +302,7 @@ export function AddDomainDialog() {
         <h3 className="text-sm font-semibold">Step 4: Check the report authorization</h3>
         <p className="text-sm text-muted-foreground">
           Mailbox providers send reports to an address on another domain only if that domain agrees to receive them.
-          {isGateway ? (
+          {isWebhook ? (
             <> The wildcard record from the installation, <code className="bg-muted px-1.5 py-0.5 rounded text-foreground break-all">*._report._dmarc.{reportDomain ?? 'REPORT_DOMAIN'}</code>, already does that for every domain.
             Without it, add one TXT record per domain on the report domain:</>
           ) : (

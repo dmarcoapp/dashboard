@@ -47,6 +47,8 @@ const applyMockUpdate = (settings: PlatformSettingsApi, update: PlatformSettings
   }
 
   if (update.apiIntakeEnabled !== undefined) next.apiIntakeEnabled = update.apiIntakeEnabled;
+  if (update.uploadEndpointEnabled !== undefined) next.uploadEndpointEnabled = update.uploadEndpointEnabled;
+  if (update.webhookEnabled !== undefined) next.webhookEnabled = update.webhookEnabled;
   if (update.reportAddressDomain !== undefined) {
     const domain = update.reportAddressDomain.trim().toLowerCase();
     const localPart = settings.reportAddress?.split('@')[0] ?? 'xxxxxxxxxxxxxx';

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { AlertTriangle, CheckCircle2, Inbox, Loader2, Pencil, Plus, RefreshCw, ScrollText, Trash2, Wifi } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Inbox, Loader2, MoreHorizontal, Pencil, Plus, RefreshCw, ScrollText, Trash2, Wifi } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
   AlertDialog,
@@ -15,6 +15,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DateTimeDisplay } from '@/components/ui/datetime-display';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   Dialog,
   DialogContent,
@@ -32,11 +39,11 @@ import { intakeService } from '@/services/intake-service';
 import type { MailboxApi, MailboxLogEntryApi, MailboxTestResultApi } from '@/types/api';
 
 function MailboxStatus({ mailbox }: { mailbox: MailboxApi }) {
-  if (!mailbox.enabled) return <Badge variant="secondary">Off</Badge>;
-  if (mailbox.passwordUnreadable) return <Badge variant="destructive">Password needed</Badge>;
+  if (!mailbox.enabled) return <Badge variant="secondary">Disabled</Badge>;
+  if (mailbox.passwordUnreadable) return <Badge variant="destructive">Password Required</Badge>;
   if (mailbox.consecutiveFailures > 0) return <Badge variant="destructive">Failing</Badge>;
-  if (!mailbox.lastSuccessAt) return <Badge variant="outline">Not read yet</Badge>;
-  return <Badge className="border-transparent bg-success text-success-foreground hover:bg-success/80">Working</Badge>;
+  if (!mailbox.lastSuccessAt) return <Badge variant="outline">Pending</Badge>;
+  return <Badge className="border-transparent bg-success text-success-foreground hover:bg-success/80">Active</Badge>;
 }
 
 function MailboxLogDialog({ mailbox, onClose }: { mailbox: MailboxApi | null; onClose: () => void }) {
@@ -57,8 +64,8 @@ function MailboxLogDialog({ mailbox, onClose }: { mailbox: MailboxApi | null; on
     <Dialog open={mailbox !== null} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Log of {mailbox?.name}</DialogTitle>
-          <DialogDescription>What the latest reads found and skipped, newest first.</DialogDescription>
+          <DialogTitle>{mailbox?.name} Log</DialogTitle>
+          <DialogDescription>Recent reads, newest first</DialogDescription>
         </DialogHeader>
         {error ? (
           <p className="text-sm text-destructive">{error}</p>
@@ -68,7 +75,7 @@ function MailboxLogDialog({ mailbox, onClose }: { mailbox: MailboxApi | null; on
             <Skeleton className="h-10 w-full" />
           </div>
         ) : entries.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nothing yet. Entries appear once the mailbox has been read.</p>
+          <p className="text-sm text-muted-foreground">No entries yet.</p>
         ) : (
           <ul className="divide-y divide-border rounded-lg border border-border">
             {entries.map((entry, index) => (
@@ -119,9 +126,9 @@ function MailboxRow({ mailbox, onEdit, onDelete, onLog }: MailboxRowProps) {
     setIsPolling(true);
     try {
       await intakeService.pollMailbox(mailbox.id);
-      toast({ title: 'The mailbox will be read shortly', description: 'Its log shows what was found.' });
+      toast({ title: 'Read queued', description: 'Results appear in the log.' });
     } catch (error) {
-      toast({ variant: 'destructive', title: 'The mailbox was not read', description: describeError(error) });
+      toast({ variant: 'destructive', title: 'Failed to queue the read', description: describeError(error) });
     } finally {
       setIsPolling(false);
     }
@@ -141,15 +148,16 @@ function MailboxRow({ mailbox, onEdit, onDelete, onLog }: MailboxRowProps) {
             <MailboxStatus mailbox={mailbox} />
           </div>
           <p className="break-all text-sm text-muted-foreground">
-            {mailbox.username} on {mailbox.host}:{mailbox.port}, folder {mailbox.folder}
+            {mailbox.username} · {mailbox.host}:{mailbox.port} · {mailbox.folder}
           </p>
           <p className="text-sm text-muted-foreground">
             {mailbox.reportAddress ? (
               <>
-                Reports to <span className="break-all font-mono text-xs">{mailbox.reportAddress}</span>.{' '}
+                <span className="break-all font-mono text-xs">{mailbox.reportAddress}</span>
+                {' · '}
               </>
             ) : null}
-            Read every {mailbox.pollIntervalMinutes} minutes. {afterImport} once stored.
+            Every {mailbox.pollIntervalMinutes} min · {afterImport}
           </p>
           <p className="text-sm text-muted-foreground">
             {mailbox.lastPolledAt ? (
@@ -157,7 +165,7 @@ function MailboxRow({ mailbox, onEdit, onDelete, onLog }: MailboxRowProps) {
                 Last read <DateTimeDisplay date={mailbox.lastPolledAt} />
                 {mailbox.lastSuccessAt && mailbox.consecutiveFailures > 0 && (
                   <>
-                    , last worked <DateTimeDisplay date={mailbox.lastSuccessAt} />
+                    {' · '}Last success <DateTimeDisplay date={mailbox.lastSuccessAt} />
                   </>
                 )}
                 .
@@ -173,11 +181,11 @@ function MailboxRow({ mailbox, onEdit, onDelete, onLog }: MailboxRowProps) {
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>
-            {mailbox.consecutiveFailures === 1 ? 'The last read failed' : `The last ${mailbox.consecutiveFailures} reads failed`}
+            {mailbox.consecutiveFailures === 1 ? 'Last read failed' : `Last ${mailbox.consecutiveFailures} reads failed`}
           </AlertTitle>
           <AlertDescription className="break-words">
             {mailbox.lastError}
-            {mailbox.consecutiveFailures >= 5 && ' Until a read works again, the mailbox is tried hourly.'}
+            {mailbox.consecutiveFailures >= 5 && ' Retrying hourly.'}
           </AlertDescription>
         </Alert>
       )}
@@ -185,7 +193,7 @@ function MailboxRow({ mailbox, onEdit, onDelete, onLog }: MailboxRowProps) {
       {testResult && (
         <Alert variant={testResult.ok ? 'default' : 'destructive'}>
           {testResult.ok ? <CheckCircle2 className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}
-          <AlertTitle>{testResult.ok ? 'Signed in' : 'The test failed'}</AlertTitle>
+          <AlertTitle>{testResult.ok ? 'Connection successful' : 'Connection failed'}</AlertTitle>
           <AlertDescription className="break-words">
             {testResult.ok
               ? `${mailbox.folder} holds ${testResult.messages ?? 0} ${testResult.messages === 1 ? 'message' : 'messages'}.`
@@ -202,22 +210,32 @@ function MailboxRow({ mailbox, onEdit, onDelete, onLog }: MailboxRowProps) {
           {isTesting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wifi className="mr-2 h-4 w-4" />}
           Test
         </Button>
-        <Button type="button" variant="outline" size="sm" onClick={handlePoll} disabled={isPolling || !mailbox.enabled}>
-          {isPolling ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-          Read now
-        </Button>
-        <Button type="button" variant="outline" size="sm" onClick={onLog}>
-          <ScrollText className="mr-2 h-4 w-4" />
-          Log
-        </Button>
         <Button type="button" variant="outline" size="sm" onClick={onEdit}>
           <Pencil className="mr-2 h-4 w-4" />
           Edit
         </Button>
-        <Button type="button" variant="ghost" size="sm" onClick={onDelete} className="text-destructive hover:text-destructive">
-          <Trash2 className="mr-2 h-4 w-4" />
-          Remove
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button type="button" variant="ghost" size="sm" aria-label={`More actions for ${mailbox.name}`}>
+              {isPolling ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreHorizontal className="h-4 w-4" />}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuItem onClick={handlePoll} disabled={isPolling || !mailbox.enabled}>
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Read Now
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onLog}>
+              <ScrollText className="mr-2 h-4 w-4" />
+              View Log
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
+              <Trash2 className="mr-2 h-4 w-4" />
+              Remove
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </li>
   );
@@ -282,8 +300,7 @@ export function MailboxesCard() {
           Mailboxes
         </CardTitle>
         <CardDescription>
-          Mailboxes that DMARC reports arrive in, read over IMAP with TLS. DMARCo only touches messages with a report
-          attached.
+          IMAP mailboxes that receive DMARC reports
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -296,7 +313,7 @@ export function MailboxesCard() {
           </div>
         ) : mailboxes.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No mailboxes yet. Add the one your DMARC records send reports to.
+            No mailboxes yet.
           </p>
         ) : (
           <ul className="divide-y divide-border rounded-lg border border-border">
@@ -315,7 +332,7 @@ export function MailboxesCard() {
         {mailboxes !== null && (
           <Button type="button" onClick={() => openDialog(null)}>
             <Plus className="mr-2 h-4 w-4" />
-            Add a mailbox
+            Add Mailbox
           </Button>
         )}
       </CardContent>
@@ -328,8 +345,7 @@ export function MailboxesCard() {
           <AlertDialogHeader>
             <AlertDialogTitle>Remove {deleting?.name}?</AlertDialogTitle>
             <AlertDialogDescription>
-              DMARCo stops reading it and forgets its password. The reports already stored stay, and nothing changes in
-              the mailbox itself.
+              The stored credentials are deleted. Reports already received are kept.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

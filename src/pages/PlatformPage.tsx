@@ -22,9 +22,9 @@ import type { PlatformSettingsApi, PlatformSettingsUpdate, SmtpSecurity } from '
 const DEFAULT_PORTS: Record<SmtpSecurity, number> = { starttls: 587, tls: 465, none: 25 };
 
 const SECURITY_LABELS: Record<SmtpSecurity, string> = {
-  starttls: 'STARTTLS, usually port 587',
-  tls: 'TLS, usually port 465',
-  none: 'None, for a relay on the same network',
+  starttls: 'STARTTLS (port 587)',
+  tls: 'TLS (port 465)',
+  none: 'None (local relay only)',
 };
 
 interface SectionProps {
@@ -38,6 +38,7 @@ function GeneralSection({ settings, onSaved }: SectionProps) {
   const [retention, setRetention] = useState(String(settings.reportRetentionDays));
   const [ipLookupEnabled, setIpLookupEnabled] = useState(settings.ipLookupEnabled);
   const [isSaving, setIsSaving] = useState(false);
+  const isDirty = retention !== String(settings.reportRetentionDays) || ipLookupEnabled !== settings.ipLookupEnabled;
 
   useEffect(() => {
     setRetention(String(settings.reportRetentionDays));
@@ -70,12 +71,12 @@ function GeneralSection({ settings, onSaved }: SectionProps) {
           <SlidersHorizontal className="h-5 w-5 shrink-0" />
           General
         </CardTitle>
-        <CardDescription>How long reports are kept, and what DMARCo looks up about them.</CardDescription>
+        <CardDescription>Report retention and sender lookups</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSave} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="report-retention">Keep reports for</Label>
+            <Label htmlFor="report-retention">Report Retention</Label>
             <div className="flex items-center gap-2">
               <Input
                 id="report-retention"
@@ -90,15 +91,15 @@ function GeneralSection({ settings, onSaved }: SectionProps) {
               />
               <span className="text-sm text-muted-foreground">days</span>
             </div>
-            <p className="text-sm text-muted-foreground">0 keeps every report for good.</p>
+            <p className="text-sm text-muted-foreground">0 keeps reports indefinitely.</p>
           </div>
 
           <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-4">
             <div className="space-y-1">
-              <Label htmlFor="ip-lookup" className="text-base">Look up sending IP addresses</Label>
+              <Label htmlFor="ip-lookup" className="text-base">IP Address Lookup</Label>
               <p className="text-sm text-muted-foreground">
-                Shows who owns each address that sends mail as your domains, and where it is. The addresses go to
-                ipwho.is and to the regional internet registries. Nothing else from your reports does.
+                Resolves the owner and country of sending IP addresses via ipwho.is and the regional internet
+                registries. Only the IP addresses are sent.
               </p>
             </div>
             <Switch
@@ -111,7 +112,7 @@ function GeneralSection({ settings, onSaved }: SectionProps) {
           </div>
 
           {!legacy && (
-            <Button type="submit" disabled={isSaving}>
+            <Button type="submit" disabled={isSaving || !isDirty}>
               {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Save
             </Button>
@@ -210,10 +211,10 @@ function EmailSection({ settings, onSaved }: SectionProps) {
       if (result.sent) {
         toast({ title: 'Test email sent', description: `Check the inbox of ${result.recipient}.` });
       } else {
-        toast({ variant: 'destructive', title: 'The test email was not sent', description: result.error ?? undefined });
+        toast({ variant: 'destructive', title: 'Failed to send the test email', description: result.error ?? undefined });
       }
     } catch (error) {
-      toast({ variant: 'destructive', title: 'The test email was not sent', description: describeError(error) });
+      toast({ variant: 'destructive', title: 'Failed to send the test email', description: describeError(error) });
     } finally {
       setIsTesting(false);
     }
@@ -222,7 +223,7 @@ function EmailSection({ settings, onSaved }: SectionProps) {
   const testButton = (
     <Button type="button" variant="outline" onClick={handleTest} disabled={isTesting || isDirty || !settings.mailConfigured}>
       {isTesting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-      Send a test email
+      Send Test Email
     </Button>
   );
 
@@ -231,19 +232,16 @@ function EmailSection({ settings, onSaved }: SectionProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Mail className="h-5 w-5 shrink-0" />
-          Outgoing email
+          Outgoing Email
         </CardTitle>
-        <CardDescription>
-          Optional. With a mail server set, DMARCo emails you the weekly overview and an alert when someone signs in
-          from somewhere new. Without one it sends nothing, and everything else works the same.
-        </CardDescription>
+        <CardDescription>Optional SMTP server for the weekly overview and sign-in alerts</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {legacy ? (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Outgoing mail is {settings.mailConfigured ? 'on' : 'off'}, set by <code className="font-mono text-xs">MAILER_DSN</code>{' '}
-              in the server's <code className="font-mono text-xs">.env</code>. It is sent from {settings.effectiveSenderAddress}.
+              {settings.mailConfigured ? 'Enabled' : 'Disabled'} by <code className="font-mono text-xs">MAILER_DSN</code> in{' '}
+              <code className="font-mono text-xs">.env</code>. Sender: {settings.effectiveSenderAddress}.
             </p>
             {testButton}
           </div>
@@ -252,16 +250,14 @@ function EmailSection({ settings, onSaved }: SectionProps) {
             {settings.smtpPasswordUnreadable && (
               <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Enter the password again</AlertTitle>
-                <AlertDescription>
-                  The stored password was encrypted with another APP_ENCRYPTION_KEY, so it cannot be read with this one.
-                </AlertDescription>
+                <AlertTitle>Password unreadable</AlertTitle>
+                <AlertDescription>It was encrypted with a different APP_ENCRYPTION_KEY. Enter it again.</AlertDescription>
               </Alert>
             )}
 
             <div className="grid gap-4 sm:grid-cols-[1fr_8rem]">
               <div className="space-y-2">
-                <Label htmlFor="smtp-host">SMTP server</Label>
+                <Label htmlFor="smtp-host">SMTP Server</Label>
                 <Input
                   id="smtp-host"
                   value={host}
@@ -301,7 +297,7 @@ function EmailSection({ settings, onSaved }: SectionProps) {
                 </SelectContent>
               </Select>
               {security === 'none' && host.trim() !== '' && (
-                <p className="text-sm text-muted-foreground">The password and every email travel unencrypted.</p>
+                <p className="text-sm text-muted-foreground">Credentials and messages are sent unencrypted.</p>
               )}
             </div>
 
@@ -324,7 +320,7 @@ function EmailSection({ settings, onSaved }: SectionProps) {
                   type="password"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
-                  placeholder={settings.smtpPasswordSet && !settings.smtpPasswordUnreadable ? 'Stored, leave empty to keep it' : ''}
+                  placeholder={settings.smtpPasswordSet && !settings.smtpPasswordUnreadable ? 'Leave empty to keep the current password' : ''}
                   autoComplete="new-password"
                   maxLength={1024}
                   disabled={host.trim() === ''}
@@ -333,7 +329,7 @@ function EmailSection({ settings, onSaved }: SectionProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="sender-address">Sender address</Label>
+              <Label htmlFor="sender-address">Sender Address</Label>
               <Input
                 id="sender-address"
                 type="email"
@@ -342,7 +338,7 @@ function EmailSection({ settings, onSaved }: SectionProps) {
                 placeholder={settings.defaultSenderAddress}
                 maxLength={255}
               />
-              <p className="text-sm text-muted-foreground">Left empty, emails come from {settings.defaultSenderAddress}.</p>
+              <p className="text-sm text-muted-foreground">Defaults to {settings.defaultSenderAddress}.</p>
             </div>
 
             <div className="flex flex-wrap gap-2">
@@ -352,7 +348,7 @@ function EmailSection({ settings, onSaved }: SectionProps) {
               </Button>
               {isDirty && (
                 <Button type="button" variant="ghost" onClick={reset} disabled={isSaving}>
-                  Discard changes
+                  Discard Changes
                 </Button>
               )}
               {testButton}
@@ -363,12 +359,12 @@ function EmailSection({ settings, onSaved }: SectionProps) {
                   onClick={() => save({ smtpPassword: '' }, 'Password removed')}
                   disabled={isSaving}
                 >
-                  Remove the password
+                  Remove Password
                 </Button>
               )}
             </div>
             <p className="text-sm text-muted-foreground">
-              The test email goes to {user?.email ?? 'your address'}, through the saved settings.
+              The test email is sent to {user?.email ?? 'your address'} using the saved settings.
             </p>
           </form>
         )}
@@ -384,16 +380,16 @@ function IntakeSection({ settings, onSaved }: SectionProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Inbox className="h-5 w-5 shrink-0" />
-            Report intake
+            Report Intake
           </CardTitle>
-          <CardDescription>Mailboxes and API keys need the key that DMARCo encrypts passwords with.</CardDescription>
+          <CardDescription>Mailboxes and the API require APP_ENCRYPTION_KEY</CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            Reports come in through the mail gateway, which is {settings.apiIntakeEnabled ? 'on' : 'off'}, set by{' '}
-            <code className="font-mono text-xs">APP_INBOUND_REPORT_EMAIL_WEBHOOK_SECRET</code> in the server's{' '}
-            <code className="font-mono text-xs">.env</code>. Once the installer has generated{' '}
-            <code className="font-mono text-xs">APP_ENCRYPTION_KEY</code>, mailboxes and API keys are set up here.
+            Webhook {settings.webhookEnabled ? 'enabled' : 'disabled'} by{' '}
+            <code className="font-mono text-xs">APP_INBOUND_REPORT_EMAIL_WEBHOOK_SECRET</code> in{' '}
+            <code className="font-mono text-xs">.env</code>. Run the installer to generate{' '}
+            <code className="font-mono text-xs">APP_ENCRYPTION_KEY</code> and manage report intake here.
           </p>
         </CardContent>
       </Card>
@@ -439,7 +435,7 @@ export default function PlatformPage() {
     <div className="space-y-4 max-w-3xl animate-fade-in">
       <div>
         <h1 className="text-3xl font-bold">Platform</h1>
-        <p className="text-muted-foreground">Settings of this DMARCo installation</p>
+        <p className="text-muted-foreground">Manage installation-wide settings</p>
       </div>
 
       {isLoading ? (
@@ -451,10 +447,10 @@ export default function PlatformPage() {
           {settings.mode === 'legacy' && (
             <Alert>
               <Info className="h-4 w-4" />
-              <AlertTitle>The settings still come from the server's .env</AlertTitle>
+              <AlertTitle>Settings are read from .env</AlertTitle>
               <AlertDescription>
-                Run the installer again on the server to finish the upgrade. It generates the key DMARCo encrypts
-                passwords with, moves these settings here, and removes them from <code className="font-mono text-xs">.env</code>.
+                Run the installer to finish the upgrade. It generates <code className="font-mono text-xs">APP_ENCRYPTION_KEY</code>{' '}
+                and moves these settings into the database.
               </AlertDescription>
             </Alert>
           )}
@@ -462,9 +458,9 @@ export default function PlatformPage() {
           {settings.unusedEnvironment.length > 0 && (
             <Alert>
               <Info className="h-4 w-4" />
-              <AlertTitle>Some lines of .env are no longer read</AlertTitle>
+              <AlertTitle>Unused .env settings</AlertTitle>
               <AlertDescription>
-                These settings are kept here now, so the lines can go from the server's{' '}
+                These are stored in the database now and can be removed from{' '}
                 <code className="font-mono text-xs">.env</code>:{' '}
                 {settings.unusedEnvironment.map((name, index) => (
                   <span key={name}>
@@ -483,8 +479,8 @@ export default function PlatformPage() {
           >
             <TabsList>
               <TabsTrigger value="general">General</TabsTrigger>
-              <TabsTrigger value="intake">Report intake</TabsTrigger>
-              <TabsTrigger value="email">Outgoing email</TabsTrigger>
+              <TabsTrigger value="intake">Report Intake</TabsTrigger>
+              <TabsTrigger value="email">Outgoing Email</TabsTrigger>
             </TabsList>
             <TabsContent value="general">
               <GeneralSection settings={settings} onSaved={setSettings} />
