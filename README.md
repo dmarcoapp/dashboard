@@ -16,9 +16,8 @@
 
 > [!IMPORTANT]
 > **Start at [dmarcoapp/dmarcoapp](https://github.com/dmarcoapp/dmarcoapp).**
-> That repository installs all of DMARCo with one command: this dashboard, the
-> backend, and the mail gateway if you want it. It is also the issue tracker for
-> the whole project, so
+> That repository installs all of DMARCo with one command: this dashboard and
+> the backend. It is also the issue tracker for the whole project, so
 > [report anything that goes wrong there](https://github.com/dmarcoapp/dmarcoapp/issues/new/choose),
 > including problems in this component. What follows is one component's source,
 > for people working on it.
@@ -44,8 +43,7 @@ This repository contains the frontend application:
 The dashboard expects a backend API that exposes the `/v1` endpoints used by the
 app, normally [`dmarcoapp/backend`](https://github.com/dmarcoapp/backend).
 Reports come in through mailboxes the backend reads over IMAP, uploads with an
-API key, or a mail gateway such as
-[`dmarcoapp/mail-inbound`](https://github.com/dmarcoapp/mail-inbound).
+API key, or a mail gateway posting to the backend's webhook.
 
 ## Features
 
@@ -229,7 +227,7 @@ contribution guide is in [`CONTRIBUTING.md`](CONTRIBUTING.md).
 - [`dmarcoapp/backend`](https://github.com/dmarcoapp/backend): API, workers, and
   report processing pipeline
 - [`dmarcoapp/mail-inbound`](https://github.com/dmarcoapp/mail-inbound): the
-  mail gateway that receives report email on port 25, being retired in favor of
+  mail gateway that received report email on port 25, retired in favor of
   mailboxes read over IMAP
 
 ## License

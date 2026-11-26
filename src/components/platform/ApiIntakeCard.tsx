@@ -521,7 +521,7 @@ export function ApiIntakeCard({ settings, onSaved }: SectionProps) {
               icon={Webhook}
               id="webhook"
               title="Webhook"
-              description="Signed reports from a mail gateway such as dmarcoapp/mail-inbound."
+              description="Signed reports posted by a mail gateway."
               checked={settings.webhookEnabled}
               disabled={saving !== null}
               onCheckedChange={(checked) => toggle('webhookEnabled', checked)}
