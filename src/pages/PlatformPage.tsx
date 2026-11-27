@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { platformService } from '@/services/platform-service';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -14,8 +15,10 @@ import { LoadError } from '@/components/LoadError';
 import { PlatformPageSkeleton } from '@/components/skeletons';
 import { ApiIntakeCard } from '@/components/platform/ApiIntakeCard';
 import { MailboxesCard } from '@/components/platform/MailboxesCard';
+import { TimezonePicker } from '@/components/platform/TimezonePicker';
 import { useToast } from '@/hooks/use-toast';
 import { describeError } from '@/lib/api-errors';
+import { PLATFORM_SETTINGS_QUERY_KEY, UTC, browserTimezone } from '@/lib/timezone';
 import { AlertTriangle, Inbox, Info, Loader2, Mail, Send, SlidersHorizontal } from 'lucide-react';
 import type { PlatformSettingsApi, PlatformSettingsUpdate, SmtpSecurity } from '@/types/api';
 
@@ -37,13 +40,19 @@ function GeneralSection({ settings, onSaved }: SectionProps) {
   const legacy = settings.mode === 'legacy';
   const [retention, setRetention] = useState(String(settings.reportRetentionDays));
   const [ipLookupEnabled, setIpLookupEnabled] = useState(settings.ipLookupEnabled);
+  const [displayTimezone, setDisplayTimezone] = useState(settings.displayTimezone);
   const [isSaving, setIsSaving] = useState(false);
-  const isDirty = retention !== String(settings.reportRetentionDays) || ipLookupEnabled !== settings.ipLookupEnabled;
+  const isDirty =
+    retention !== String(settings.reportRetentionDays) ||
+    ipLookupEnabled !== settings.ipLookupEnabled ||
+    displayTimezone !== settings.displayTimezone;
+  const ownTimezone = browserTimezone();
 
   useEffect(() => {
     setRetention(String(settings.reportRetentionDays));
     setIpLookupEnabled(settings.ipLookupEnabled);
-  }, [settings.reportRetentionDays, settings.ipLookupEnabled]);
+    setDisplayTimezone(settings.displayTimezone);
+  }, [settings.reportRetentionDays, settings.ipLookupEnabled, settings.displayTimezone]);
 
   const handleSave = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -55,7 +64,7 @@ function GeneralSection({ settings, onSaved }: SectionProps) {
 
     setIsSaving(true);
     try {
-      onSaved(await platformService.updateSettings({ reportRetentionDays: days, ipLookupEnabled }));
+      onSaved(await platformService.updateSettings({ reportRetentionDays: days, ipLookupEnabled, displayTimezone }));
       toast({ title: 'Settings saved' });
     } catch (error) {
       toast({ variant: 'destructive', title: 'Failed to save the settings', description: describeError(error) });
@@ -71,7 +80,7 @@ function GeneralSection({ settings, onSaved }: SectionProps) {
           <SlidersHorizontal className="h-5 w-5 shrink-0" />
           General
         </CardTitle>
-        <CardDescription>Report retention and sender lookups</CardDescription>
+        <CardDescription>Report retention, sender lookups, and the time zone</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSave} className="space-y-6">
@@ -92,6 +101,27 @@ function GeneralSection({ settings, onSaved }: SectionProps) {
               <span className="text-sm text-muted-foreground">days</span>
             </div>
             <p className="text-sm text-muted-foreground">0 keeps reports indefinitely.</p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="display-timezone">Time Zone</Label>
+            <div className="flex flex-wrap items-center gap-2">
+              <TimezonePicker
+                id="display-timezone"
+                value={displayTimezone}
+                onChange={setDisplayTimezone}
+                disabled={legacy}
+              />
+              {!legacy && ownTimezone !== displayTimezone && (
+                <Button type="button" variant="ghost" size="sm" onClick={() => setDisplayTimezone(ownTimezone)}>
+                  Use {ownTimezone.replace(/_/g, ' ')}
+                </Button>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Dates and times are shown in this zone{displayTimezone === UTC ? '' : ', and in UTC on hover'}. They are
+              stored in UTC.
+            </p>
           </div>
 
           <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-4">
@@ -408,10 +438,19 @@ const TABS = ['general', 'intake', 'email'] as const;
 type Tab = (typeof TABS)[number];
 
 export default function PlatformPage() {
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedTab = searchParams.get('tab');
   const tab: Tab = TABS.includes(requestedTab as Tab) ? (requestedTab as Tab) : 'general';
-  const [settings, setSettings] = useState<PlatformSettingsApi | null>(null);
+  const [settings, setStoredSettings] = useState<PlatformSettingsApi | null>(null);
+  // Every date on screen reads the time zone from the query cache.
+  const setSettings = useCallback(
+    (next: PlatformSettingsApi) => {
+      setStoredSettings(next);
+      queryClient.setQueryData(PLATFORM_SETTINGS_QUERY_KEY, next);
+    },
+    [queryClient],
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -425,7 +464,7 @@ export default function PlatformPage() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [setSettings]);
 
   useEffect(() => {
     load();

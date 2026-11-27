@@ -56,8 +56,9 @@ API key, or a mail gateway posting to the backend's webhook.
 - Domain list and per-domain pages with the published DMARC record, a protection
   level, and DKIM and SPF alignment
 - Blocklist management
-- A Platform page for report retention, IP lookups, outgoing mail, IMAP
-  mailboxes, and the API's upload endpoint and webhook
+- A Platform page for report retention, IP lookups, the time zone, outgoing
+  mail, IMAP mailboxes, and the API's upload endpoint and webhook
+- Dates and times in the time zone set on the Platform page, with UTC on hover
 - Login with optional two-factor authentication by authenticator app, profile,
   and notification settings
 - Responsive layout for desktop and mobile

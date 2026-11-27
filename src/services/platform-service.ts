@@ -13,6 +13,7 @@ const applyMockUpdate = (settings: PlatformSettingsApi, update: PlatformSettings
 
   if (update.reportRetentionDays !== undefined) next.reportRetentionDays = update.reportRetentionDays;
   if (update.ipLookupEnabled !== undefined) next.ipLookupEnabled = update.ipLookupEnabled;
+  if (update.displayTimezone !== undefined) next.displayTimezone = update.displayTimezone.trim() || 'UTC';
 
   if (update.smtpHost !== undefined) {
     if (update.smtpHost.trim() === '') {

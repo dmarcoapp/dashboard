@@ -24,6 +24,7 @@ export const mockPlatformSettings: PlatformSettingsApi = {
   mode: 'platform',
   reportRetentionDays: 365,
   ipLookupEnabled: true,
+  displayTimezone: 'UTC',
   mailConfigured: true,
   smtpHost: 'smtp.example.com',
   smtpPort: 587,

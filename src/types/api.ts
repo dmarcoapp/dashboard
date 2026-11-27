@@ -60,6 +60,8 @@ export interface PlatformSettingsApi {
   mode: 'platform' | 'legacy';
   reportRetentionDays: number;
   ipLookupEnabled: boolean;
+  // The IANA time zone dates and times are shown in. The API sends them in UTC.
+  displayTimezone: string;
   mailConfigured: boolean;
   smtpHost: string | null;
   smtpPort: number | null;
@@ -87,6 +89,7 @@ export interface PlatformSettingsApi {
 export interface PlatformSettingsUpdate {
   reportRetentionDays?: number;
   ipLookupEnabled?: boolean;
+  displayTimezone?: string;
   smtpHost?: string;
   smtpPort?: number;
   smtpSecurity?: SmtpSecurity;
