@@ -107,7 +107,8 @@ class ApiClient {
           throw new ApiError(
             retryResponse.status,
             error.detail || error.message || 'Request failed',
-            error.error
+            error.error,
+            retryAfterSeconds(retryResponse)
           );
         }
 
@@ -124,7 +125,8 @@ class ApiClient {
       throw new ApiError(
         response.status,
         error.detail || error.message || 'Request failed',
-        error.error
+        error.error,
+        retryAfterSeconds(response)
       );
     }
 
@@ -191,8 +193,14 @@ class ApiClient {
   }
 }
 
+// Seconds from a Retry-After header, which the backend sends with a 429.
+function retryAfterSeconds(response: Response): number | undefined {
+  const seconds = Number(response.headers.get('Retry-After'));
+  return Number.isFinite(seconds) && seconds > 0 ? seconds : undefined;
+}
+
 export class ApiError extends Error {
-  constructor(public status: number, message: string, public error?: string) {
+  constructor(public status: number, message: string, public error?: string, public retryAfter?: number) {
     super(message);
     this.name = 'ApiError';
   }

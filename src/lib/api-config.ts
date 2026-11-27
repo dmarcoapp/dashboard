@@ -46,6 +46,7 @@ export const API_ENDPOINTS = {
   // Domains
   domains: '/v1/dmarc/domains',
   domainById: (id: string) => `/v1/dmarc/domains/${id}`,
+  domainCheck: (id: string) => `/v1/dmarc/domains/${id}/check`,
 
   // Blocklist
   blocklist: '/v1/blocklist',

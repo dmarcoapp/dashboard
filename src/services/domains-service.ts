@@ -108,4 +108,17 @@ export const domainsService = {
     }
     return apiClient.get<DomainApi>(API_ENDPOINTS.domainById(id));
   },
+
+  // Reads the domain's DMARC record from DNS now. The backend refuses it
+  // with a 429 for a minute after the domain's last check.
+  async checkDomain(id: string): Promise<DomainApi> {
+    if (appConfig.mockMode) {
+      await mockDelay();
+      const found = mockDomains.find(d => d.id === id);
+      if (!found) throw new Error('Domain not found');
+      found.lastChecked = new Date().toISOString();
+      return { ...found };
+    }
+    return apiClient.post<DomainApi>(API_ENDPOINTS.domainCheck(id));
+  },
 };

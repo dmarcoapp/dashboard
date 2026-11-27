@@ -1,16 +1,22 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Shield, Mail, Clock, Calendar, Inbox, XCircle, Info, Copy, Check, FileText } from 'lucide-react';
+import { ArrowLeft, Shield, Mail, Clock, Calendar, Inbox, XCircle, Info, Copy, Check, FileText, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { TouchTooltip } from '@/components/ui/touch-tooltip';
 import { domainsService } from '@/services/domains-service';
+import { ApiError } from '@/lib/api-client';
+import { parseApiDate } from '@/lib/date-utils';
+import { toast } from '@/hooks/use-toast';
 import { parseDmarcRecord, getPolicyDescription, getAlignmentDescription, getFailureOptionsDescription } from '@/lib/dmarc-parser';
 import { DateTimeDisplay } from '@/components/ui/datetime-display';
 import { DomainDetailSkeleton } from '@/components/skeletons';
 import type { DomainApi, ProtectionLevel } from '@/types/domain';
+
+// The backend refuses a new check for this long after the last one.
+const CHECK_COOLDOWN_MS = 60_000;
 
 export default function DomainDetailPage() {
   const { domain: domainId } = useParams<{ domain: string }>();
@@ -19,6 +25,26 @@ export default function DomainDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [checking, setChecking] = useState(false);
+  // When the button may be used again, on this browser's clock. The minute is
+  // timed here rather than compared with the server's lastChecked, so a
+  // browser clock that is off does not keep the button grey or free it early.
+  const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+  const coolingDown = cooldownUntil !== null && cooldownUntil > now;
+
+  // Wake up once when the cooldown ends, so the button comes back on its own.
+  useEffect(() => {
+    if (cooldownUntil === null || cooldownUntil <= Date.now()) return;
+    const timer = setTimeout(() => setNow(Date.now()), cooldownUntil - Date.now() + 100);
+    return () => clearTimeout(timer);
+  }, [cooldownUntil]);
+
+  const startCooldown = (ms: number) => {
+    const current = Date.now();
+    setNow(current);
+    setCooldownUntil(current + ms);
+  };
 
   useEffect(() => {
     const fetchDomain = async () => {
@@ -29,6 +55,12 @@ export default function DomainDetailPage() {
       try {
         const response = await domainsService.getDomainById(domainId);
         setDomain(response);
+        // A check that ran moments ago still holds the button, for at most
+        // a minute from now.
+        const lastCheckedAt = parseApiDate(response.lastChecked)?.getTime();
+        if (lastCheckedAt !== undefined) {
+          startCooldown(Math.min(CHECK_COOLDOWN_MS, Math.max(0, lastCheckedAt + CHECK_COOLDOWN_MS - Date.now())));
+        }
       } catch (err) {
         setError('Failed to load domain details');
         console.error('Error fetching domain:', err);
@@ -45,6 +77,31 @@ export default function DomainDetailPage() {
       await navigator.clipboard.writeText(domain.dmarcRecord);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleCheck = async () => {
+    if (!domain) return;
+    setChecking(true);
+    try {
+      const updated = await domainsService.checkDomain(domain.id);
+      setDomain(updated);
+      startCooldown(CHECK_COOLDOWN_MS);
+      toast({
+        title: 'Domain checked',
+        description: updated.dmarcRecord ? 'The DMARC record was read again from DNS.' : 'No DMARC record was found in DNS.',
+      });
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 429) {
+        // Checked in the meantime, by the schedule or another tab.
+        const seconds = err.retryAfter ?? CHECK_COOLDOWN_MS / 1000;
+        startCooldown(seconds * 1000);
+        toast({ title: 'Checked less than a minute ago', description: `Try again in ${seconds} seconds.` });
+      } else {
+        toast({ title: 'Could not check the domain', description: 'Try again later.', variant: 'destructive' });
+      }
+    } finally {
+      setChecking(false);
     }
   };
 
@@ -110,16 +167,28 @@ export default function DomainDetailPage() {
             </div>
           </div>
         </div>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="self-start sm:self-auto"
-          onClick={() => navigate(`/reports?filter.eq.domain=${encodeURIComponent(domain.domain || '')}`)}
-        >
-          <FileText className="h-4 w-4 mr-2" />
-          <span className="hidden sm:inline">View Reports</span>
-          <span className="sm:hidden">Reports</span>
-        </Button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={checking || coolingDown}
+            title={coolingDown ? 'Checked less than a minute ago' : 'Read the DMARC record from DNS again'}
+            onClick={handleCheck}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2${checking ? ' animate-spin' : ''}`} />
+            <span className="hidden sm:inline">Check Again</span>
+            <span className="sm:hidden">Check</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate(`/reports?filter.eq.domain=${encodeURIComponent(domain.domain || '')}`)}
+          >
+            <FileText className="h-4 w-4 mr-2" />
+            <span className="hidden sm:inline">View Reports</span>
+            <span className="sm:hidden">Reports</span>
+          </Button>
+        </div>
       </div>
 
       {/* DMARC Record Overview */}
