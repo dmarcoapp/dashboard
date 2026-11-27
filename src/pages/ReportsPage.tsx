@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, CheckCircle2, Loader2, Trash2, Search } from 'lucide-react';
 import type { ReportApi, ReportsResponse } from '@/types/api';
+import { ReportSourceBadge } from '@/components/reports/ReportSourceBadge';
 import { DateRangeDisplay } from '@/components/ui/datetime-display';
 import { cn } from '@/lib/utils';
 import { useUrlFilters } from '@/hooks/use-url-filters';
@@ -375,8 +376,11 @@ export default function ReportsPage() {
                         <ChevronRight className="h-4 w-4 text-muted-foreground" />
                       </div>
                     </div>
-                    <div className="text-sm text-muted-foreground mb-2">
-                      <span className="text-muted-foreground/70">Reported by</span> {report.reportingOrganization}
+                    <div className="flex items-center justify-between gap-2 text-sm text-muted-foreground mb-2">
+                      <span className="min-w-0 truncate"><span className="text-muted-foreground/70">Reported by</span> {report.reportingOrganization}</span>
+                      <span className="shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <ReportSourceBadge source={report.source} />
+                      </span>
                     </div>
                     <div className="flex items-center justify-start text-xs mb-2">
                       <div className="flex items-center gap-3">
@@ -437,6 +441,7 @@ export default function ReportsPage() {
                           {getSortIcon('reportingOrganization')}
                         </div>
                       </TableHead>
+                      <TableHead className="font-semibold">Channel</TableHead>
                       <TableHead 
                         className="font-semibold cursor-pointer hover:bg-muted/80 select-none"
                         onClick={() => handleSort('endDate')}
@@ -500,6 +505,9 @@ export default function ReportsPage() {
                         </TableCell>
                         <TableCell className="font-bold">{report.domain}</TableCell>
                         <TableCell>{report.reportingOrganization}</TableCell>
+                        <TableCell>
+                          <ReportSourceBadge source={report.source} />
+                        </TableCell>
                         <TableCell className="font-bold">
                           <DateRangeDisplay startDate={report.beginDate} endDate={report.endDate} />
                         </TableCell>
@@ -558,7 +566,7 @@ export default function ReportsPage() {
                     ))}
                     {(!data?.items || data.items.length === 0) && (
                       <TableRow>
-                        <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
+                        <TableCell colSpan={11} className="text-center text-muted-foreground py-8">
                           No reports found
                         </TableCell>
                       </TableRow>

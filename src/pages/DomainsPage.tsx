@@ -15,7 +15,7 @@ import { DomainsPageSkeleton } from '@/components/skeletons';
 import type { DomainApi, DomainsResponse, ProtectionLevel } from '@/types/domain';
 
 type SortDirection = 'asc' | 'desc';
-type SortField = 'domain' | 'createdAt' | 'lastChecked' | 'protectionLevel';
+type SortField = 'domain' | 'createdAt' | 'lastChecked' | 'lastReportAt' | 'protectionLevel';
 
 const getProtectionMeta = (level: ProtectionLevel) => {
   if (level === 'strong') {
@@ -273,6 +273,13 @@ export default function DomainsPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-1">
+                        <span className="text-muted-foreground/70">Last report:</span>
+                        {domain.lastReportAt
+                          ? <DateTimeDisplay date={domain.lastReportAt} />
+                          : 'None yet'
+                        }
+                      </div>
+                      <div className="flex items-center gap-1">
                         <span className="text-muted-foreground/70">Checked:</span>
                         {domain.lastChecked 
                           ? <DateTimeDisplay date={domain.lastChecked} />
@@ -324,6 +331,15 @@ export default function DomainsPage() {
                       </TableHead>
                       <TableHead 
                         className="font-semibold cursor-pointer hover:bg-muted/80 select-none"
+                        onClick={() => handleSort('lastReportAt')}
+                      >
+                        <div className="flex items-center">
+                          Last report
+                          {getSortIcon('lastReportAt')}
+                        </div>
+                      </TableHead>
+                      <TableHead 
+                        className="font-semibold cursor-pointer hover:bg-muted/80 select-none"
                         onClick={() => handleSort('lastChecked')}
                       >
                         <div className="flex items-center">
@@ -367,6 +383,12 @@ export default function DomainsPage() {
                             }
                           </TableCell>
                           <TableCell>
+                            {domain.lastReportAt
+                              ? <DateTimeDisplay date={domain.lastReportAt} />
+                              : 'None yet'
+                            }
+                          </TableCell>
+                          <TableCell>
                             {domain.lastChecked 
                               ? <DateTimeDisplay date={domain.lastChecked} />
                               : 'Never'
@@ -381,7 +403,7 @@ export default function DomainsPage() {
                       ))}
                     {domains.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                        <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                           {debouncedSearch ? 'No domains match your search' : 'No domains found'}
                         </TableCell>
                       </TableRow>

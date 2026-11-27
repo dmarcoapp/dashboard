@@ -189,10 +189,16 @@ export interface ApiDateObject {
 }
 
 // Report Types
+
+// How a report reached DMARCo: from a mailbox over IMAP, through the upload
+// endpoint, or posted to the webhook.
+export type ReportSource = 'mailbox' | 'upload' | 'webhook';
+
 export interface ReportApi {
   id: string;
   domainId: string | null;
   receivedAt?: ApiDateObject | string | null;
+  source?: ReportSource | null;
   lastChecked: ApiDateObject | null;
   lastError: string | null;
   fromAddress: string | null;

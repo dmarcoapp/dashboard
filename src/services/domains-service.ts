@@ -17,6 +17,7 @@ const mockDomains: DomainApi[] = [
     domain: 'example.com',
     createdAt: { date: '2025-11-15 09:00:00.000000', timezone_type: 3, timezone: 'UTC' },
     lastChecked: { date: '2025-12-28 10:00:00.000000', timezone_type: 3, timezone: 'UTC' },
+    lastReportAt: { date: '2025-12-28 06:12:00.000000', timezone_type: 3, timezone: 'UTC' },
     dmarcRecord: 'v=DMARC1; p=quarantine; rua=mailto:dmarc-aggregate-reports-very-long-address@an-example-organization-with-a-long-name.example,mailto:secondary-dmarc-reports@another-very-long-domain-name-for-testing.example; ruf=mailto:forensics-detailed-reports@an-example-organization-with-a-long-name.example; adkim=s; aspf=s; pct=100; fo=1; ri=86400',
     isConfiguredCorrectly: true,
     protectionLevel: 'moderate',
@@ -26,6 +27,7 @@ const mockDomains: DomainApi[] = [
     domain: 'example.net',
     createdAt: { date: '2025-10-20 14:30:00.000000', timezone_type: 3, timezone: 'UTC' },
     lastChecked: { date: '2025-12-27 15:30:00.000000', timezone_type: 3, timezone: 'UTC' },
+    lastReportAt: { date: '2025-12-27 04:40:00.000000', timezone_type: 3, timezone: 'UTC' },
     dmarcRecord: 'v=DMARC1; p=reject; sp=reject; rua=mailto:dmarc-reports@example.net; adkim=r; aspf=r; pct=100',
     isConfiguredCorrectly: false,
     protectionLevel: 'strong',
@@ -35,6 +37,7 @@ const mockDomains: DomainApi[] = [
     domain: 'mail.example',
     createdAt: { date: '2025-12-01 11:15:00.000000', timezone_type: 3, timezone: 'UTC' },
     lastChecked: { date: '2025-12-26 08:45:00.000000', timezone_type: 3, timezone: 'UTC' },
+    lastReportAt: { date: '2025-12-20 07:05:00.000000', timezone_type: 3, timezone: 'UTC' },
     dmarcRecord: 'v=DMARC1; p=none; rua=mailto:postmaster@mail.example',
     isConfiguredCorrectly: true,
     protectionLevel: 'weak',
@@ -64,7 +67,7 @@ export const domainsService = {
           pageCount: Math.ceil(filtered.length / pageSize),
           totalCount: filtered.length,
           filterableFields: ['domain'],
-          sortableFields: ['domain', 'lastChecked'],
+          sortableFields: ['domain', 'lastChecked', 'lastReportAt'],
         },
       };
     }

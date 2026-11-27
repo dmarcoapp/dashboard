@@ -7,6 +7,7 @@ export interface DomainApi {
   domain: string | null;
   createdAt: ApiDateObject | string | null;
   lastChecked: ApiDateObject | string | null;
+  lastReportAt?: ApiDateObject | string | null;
   dmarcRecord: string | null;
   isConfiguredCorrectly: boolean | null;
   protectionLevel: ProtectionLevel;

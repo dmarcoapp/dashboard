@@ -20,14 +20,17 @@ import {
 import { FilterOperator, FilterValue, useUrlFilters } from '@/hooks/use-url-filters';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Separator } from '@/components/ui/separator';
+import { REPORT_SOURCE_META } from '@/lib/report-source';
+import type { ReportSource } from '@/types/api';
 
 type DatePreset = 'yesterday' | 'week' | 'month' | 'year' | null;
 
 interface FilterConfig {
   field: string;
   label: string;
-  type: 'text' | 'number' | 'percentage' | 'date' | 'boolean';
+  type: 'text' | 'number' | 'percentage' | 'date' | 'boolean' | 'select';
   operators: { value: FilterOperator; label: string }[];
+  options?: { value: string; label: string }[];
 }
 
 const FILTER_CONFIGS: FilterConfig[] = [
@@ -60,6 +63,19 @@ const FILTER_CONFIGS: FilterConfig[] = [
     operators: [
       { value: 'eq', label: 'Is' },
     ],
+  },
+  {
+    field: 'email.source',
+    label: 'Channel',
+    type: 'select',
+    operators: [
+      { value: 'eq', label: 'Is' },
+      { value: 'neq', label: 'Is not' },
+    ],
+    options: (Object.keys(REPORT_SOURCE_META) as ReportSource[]).map((source) => ({
+      value: source,
+      label: REPORT_SOURCE_META[source].label,
+    })),
   },
   {
     field: 'dmarcCompliance',
@@ -295,6 +311,9 @@ export function ReportsFilterPanel({ urlFilters, showQuickSearch = true, actions
     }
     if (config?.type === 'boolean') {
       return filter.value === '1' ? 'Yes' : 'No';
+    }
+    if (config?.type === 'select') {
+      return config.options?.find(o => o.value === filter.value)?.label ?? filter.value;
     }
     return filter.value;
   };
@@ -538,6 +557,17 @@ export function ReportsFilterPanel({ urlFilters, showQuickSearch = true, actions
                           <SelectContent>
                             <SelectItem value="1">Yes</SelectItem>
                             <SelectItem value="0">No</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : currentAddConfig.type === 'select' ? (
+                        <Select value={pendingValue} onValueChange={setPendingValue}>
+                          <SelectTrigger className="w-[120px]">
+                            <SelectValue placeholder="Select" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {currentAddConfig.options?.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       ) : currentAddConfig.type === 'percentage' ? (

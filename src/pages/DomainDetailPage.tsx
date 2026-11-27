@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Shield, Mail, Clock, Calendar, XCircle, Info, Copy, Check, FileText } from 'lucide-react';
+import { ArrowLeft, Shield, Mail, Clock, Calendar, Inbox, XCircle, Info, Copy, Check, FileText } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -95,6 +95,10 @@ export default function DomainDetailPage() {
               <PolicyStrengthBadge level={domain.protectionLevel} />
             </div>
             <div className="flex flex-col gap-1 text-xs md:text-sm text-muted-foreground">
+              <span className="flex items-center gap-2">
+                <Inbox className="h-3.5 w-3.5 md:h-4 md:w-4 shrink-0" />
+                <span className="truncate">Last report: {domain.lastReportAt ? <DateTimeDisplay date={domain.lastReportAt} /> : 'None yet'}</span>
+              </span>
               <span className="flex items-center gap-2">
                 <Clock className="h-3.5 w-3.5 md:h-4 md:w-4 shrink-0" />
                 <span className="truncate">Last checked: {domain.lastChecked ? <DateTimeDisplay date={domain.lastChecked} /> : 'Never'}</span>

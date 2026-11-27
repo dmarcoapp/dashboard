@@ -18,6 +18,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { ArrowLeft, Loader2, Calendar, Building2, Globe, Search, X, FileCode, Copy, Check, HelpCircle, Shield, Mail, Filter, Download, Server, Phone, CheckCircle2, AlertTriangle, Fingerprint, Clock3, Trash2 } from 'lucide-react';
 import { ReportDetailSkeleton } from '@/components/skeletons';
 import type { ReportApi, ReportRecordApi, RecordsResponse, SourceIpInfo } from '@/types/api';
+import { ReportSourceBadge } from '@/components/reports/ReportSourceBadge';
 import { DateRangeDisplay, DateTimeDisplay } from '@/components/ui/datetime-display';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -355,6 +356,7 @@ export default function ReportDetailPage() {
               <p className="inline-flex items-center gap-1 text-xs md:text-sm text-muted-foreground">
                 <Clock3 className="h-3.5 w-3.5 shrink-0" />
                 Received: <DateTimeDisplay date={report.receivedAt ?? null} />
+                {report.source && <ReportSourceBadge source={report.source} className="ml-1" />}
               </p>
             </div>
           </div>
