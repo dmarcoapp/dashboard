@@ -200,13 +200,13 @@ export const intakeService = {
       await mockDelay();
       const settings = mockPlatformState.get();
       const addresses: IntakeAddressApi[] = [];
-      if (settings.reportAddress && settings.apiIntakeEnabled && settings.webhookEnabled) {
-        addresses.push({ address: settings.reportAddress, kind: 'webhook', label: 'Webhook' });
-      }
       for (const mailbox of currentMockMailboxes) {
         if (mailbox.enabled && mailbox.reportAddress) {
           addresses.push({ address: mailbox.reportAddress, kind: 'mailbox', label: mailbox.name });
         }
+      }
+      if (settings.reportAddress && settings.apiIntakeEnabled && settings.webhookEnabled) {
+        addresses.push({ address: settings.reportAddress, kind: 'webhook', label: 'Webhook' });
       }
       return addresses;
     }

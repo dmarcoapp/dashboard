@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Copy, Check, Plus, Star, ChevronDown, Settings2 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -15,11 +15,11 @@ import type { IntakeAddressApi } from '@/types/api';
 type Policy = 'reject' | 'quarantine' | 'none';
 type Alignment = 's' | 'r';
 type Pct = '100' | '50' | '25';
+type Channel = IntakeAddressApi['kind'];
 
 export function AddDomainDialog() {
   const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
-  const { user } = useAuth();
   const [copied, setCopied] = useState(false);
   const [configOpen, setConfigOpen] = useState(false);
   
@@ -31,10 +31,13 @@ export function AddDomainDialog() {
   const [spfAlignment, setSpfAlignment] = useState<Alignment>('r');
   const [pct, setPct] = useState<Pct>('100');
   
-  // The addresses reports can go to: the webhook's, and each mailbox's.
+  // The addresses reports can go to: each mailbox's report address, then the
+  // webhook's. Mailboxes without a report address are named, so the dialog
+  // can say why they are missing from the list.
   const [addresses, setAddresses] = useState<IntakeAddressApi[] | null>(null);
-  const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
-  const fallbackAddress = user?.sharedAggregatePostboxAddress || null;
+  const [mailboxesWithoutAddress, setMailboxesWithoutAddress] = useState<string[]>([]);
+  const [channel, setChannel] = useState<Channel>('mailbox');
+  const [selectedMailbox, setSelectedMailbox] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -45,18 +48,36 @@ export function AddDomainDialog() {
         if (!cancelled) setAddresses(list);
       })
       .catch(() => {
+        if (!cancelled) setAddresses([]);
+      });
+    intakeService
+      .getMailboxes()
+      .then((mailboxes) => {
         if (!cancelled) {
-          setAddresses(fallbackAddress ? [{ address: fallbackAddress, kind: 'webhook', label: 'Webhook' }] : []);
+          setMailboxesWithoutAddress(
+            mailboxes.filter((mailbox) => mailbox.enabled && !mailbox.reportAddress).map((mailbox) => mailbox.name),
+          );
         }
+      })
+      .catch(() => {
+        if (!cancelled) setMailboxesWithoutAddress([]);
       });
     return () => {
       cancelled = true;
     };
-  }, [open, fallbackAddress]);
+  }, [open]);
 
   // Without the real address there is nothing safe to show: a placeholder would
   // end up in someone's DNS.
-  const chosen = addresses?.find((candidate) => candidate.address === selectedAddress) ?? addresses?.[0] ?? null;
+  // First the channel, when both are on offer, then the mailbox, when there
+  // are several. A mailbox is the default: it is how a new install takes reports.
+  const mailboxAddresses = addresses?.filter((candidate) => candidate.kind === 'mailbox') ?? [];
+  const webhookAddress = addresses?.find((candidate) => candidate.kind === 'webhook') ?? null;
+  const activeChannel: Channel = mailboxAddresses.length === 0 ? 'webhook' : webhookAddress ? channel : 'mailbox';
+  const chosen =
+    activeChannel === 'webhook'
+      ? webhookAddress
+      : mailboxAddresses.find((candidate) => candidate.address === selectedMailbox) ?? mailboxAddresses[0] ?? null;
   const reportingUri = chosen?.address ?? null;
   const reportDomain = reportingUri?.split('@')[1] ?? null;
   const isWebhook = chosen?.kind === 'webhook';
@@ -106,31 +127,49 @@ export function AddDomainDialog() {
               Copy the following DMARC record and paste it as the TXT record value:
             </p>
 
-            {addresses.length > 1 ? (
+            {webhookAddress && mailboxAddresses.length > 0 && (
               <div className="space-y-2">
-                <Label htmlFor="report-address" className="text-xs text-muted-foreground font-normal">Send the reports to:</Label>
-                <Select value={reportingUri ?? undefined} onValueChange={setSelectedAddress}>
-                  <SelectTrigger id="report-address" className="text-xs">
+                <Label className="text-xs text-muted-foreground font-normal">Where should the reports go?</Label>
+                <RadioGroup aria-label="Where should the reports go?" value={activeChannel} onValueChange={(value) => setChannel(value as Channel)} className="gap-2">
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="mailbox" id="channel-mailbox" />
+                    <Label htmlFor="channel-mailbox" className="text-sm font-normal">To a mailbox DMARCo reads over IMAP</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="webhook" id="channel-webhook" />
+                    <Label htmlFor="channel-webhook" className="text-sm font-normal">To the mail gateway, which posts them to the webhook</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+            )}
+
+            {activeChannel === 'mailbox' && mailboxAddresses.length > 1 && (
+              <div className="space-y-2">
+                <Label htmlFor="report-mailbox" className="text-xs text-muted-foreground font-normal">Mailbox:</Label>
+                <Select value={reportingUri ?? undefined} onValueChange={setSelectedMailbox}>
+                  <SelectTrigger id="report-mailbox" className="text-xs">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {addresses.map((candidate) => (
+                    {mailboxAddresses.map((candidate) => (
                       <SelectItem key={candidate.address} value={candidate.address}>
-                        <span className="font-mono text-xs">{candidate.address}</span>
-                        <span className="ml-2 text-xs text-muted-foreground">{candidate.label}</span>
+                        <span className="text-xs">{candidate.label}</span>
+                        <span className="ml-2 font-mono text-xs text-muted-foreground">{candidate.address}</span>
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-            ) : (
-              <div className="space-y-2">
-                <p className="text-xs text-muted-foreground">Your DMARCo Reporting URI:</p>
-                <code className="block bg-muted p-2 rounded text-xs font-mono break-all">
-                  mailto:{reportingUri}
-                </code>
-              </div>
             )}
+
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground">
+                Your DMARCo reporting URI{chosen ? `, ${chosen.kind === 'mailbox' ? `mailbox ${chosen.label}` : 'the webhook'}` : ''}:
+              </p>
+              <code className="block bg-muted p-2 rounded text-xs font-mono break-all">
+                mailto:{reportingUri}
+              </code>
+            </div>
 
             <div className="space-y-2">
               <p className="text-xs text-muted-foreground">Your DMARC record (copy this):</p>
@@ -152,7 +191,20 @@ export function AddDomainDialog() {
           </>
         ) : (
           <p className="text-sm text-destructive">
-            No report address is configured. Add a mailbox with a report address or enable the webhook on the{' '}
+            No report address is configured. Give a mailbox its report address on the{' '}
+            <Link to="/platform?tab=intake" onClick={() => setOpen(false)} className="underline underline-offset-4">
+              Platform page
+            </Link>
+            , under Report intake.
+          </p>
+        )}
+
+        {addresses !== null && mailboxesWithoutAddress.length > 0 && (
+          <p className="text-xs text-muted-foreground">
+            {mailboxesWithoutAddress.length === 1
+              ? `The mailbox ${mailboxesWithoutAddress[0]} has no report address, so it is not offered here. Add the address that delivers to it`
+              : `The mailboxes ${mailboxesWithoutAddress.join(', ')} have no report address, so they are not offered here. Add the addresses that deliver to them`}{' '}
+            under Report intake on the{' '}
             <Link to="/platform?tab=intake" onClick={() => setOpen(false)} className="underline underline-offset-4">
               Platform page
             </Link>
